@@ -34,6 +34,7 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - run: npm run eval
       - run: npm run build
       - run: npm run mcp:build
 

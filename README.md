@@ -42,6 +42,6 @@ uv sync
 uv run python -m catchment all austin
 ```
 
-[Development, checks and deployment](docs/development.md) · [Data sources and cleaning](docs/data-pipeline.md) · [Design decisions](docs/decisions.md) · [Measurement](docs/measurement.md)
+[Development, checks and deployment](docs/development.md) · [Data sources and cleaning](docs/data-pipeline.md) · [Design decisions](docs/decisions.md) · [Measurement](docs/measurement.md) · [Quality evals](docs/eval.md)
 
 Data © Overture Maps Foundation and its sources. [Attribution](https://docs.overturemaps.org/attribution/)
