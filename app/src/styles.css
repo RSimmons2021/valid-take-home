@@ -5,7 +5,8 @@
   --mono: "Geist Mono Variable", ui-monospace, monospace;
   --ink: #050608;
   --ink-2: #3c3f45;
-  --muted: #6e7178;
+  /* #63666d, not lighter: keeps 4.5:1 (WCAG AA) on every light surface, including chips */
+  --muted: #63666d;
   --paper: #e7e4dc;
   --paper-2: #efede7;
   --card: #fbfbf9;
@@ -13,6 +14,8 @@
   --line-2: rgba(5, 6, 8, 0.07);
   --blue: #1626ff;
   --blue-ink: #0b14b8;
+  /* blue used as text; fills keep --blue */
+  --blue-text: #1626ff;
   --blue-wash: rgba(22, 38, 255, 0.08);
   --cyan: #00e1f0;
   --amber: #ffb81f;
@@ -55,6 +58,8 @@
     --line-2: rgba(255, 255, 255, 0.06);
     --blue: #4a57ff;
     --blue-ink: #6f7aff;
+  --blue-text: #8a92ff;
+    --blue-text: #8a92ff;
     --blue-wash: rgba(74, 87, 255, 0.14);
     --hover: rgba(255, 255, 255, 0.06);
     --line-strong: rgba(255, 255, 255, 0.32);
@@ -84,6 +89,7 @@
   --line-2: rgba(255, 255, 255, 0.06);
   --blue: #4a57ff;
   --blue-ink: #6f7aff;
+  --blue-text: #8a92ff;
   --blue-wash: rgba(74, 87, 255, 0.14);
   --hover: rgba(255, 255, 255, 0.06);
   --line-strong: rgba(255, 255, 255, 0.32);
@@ -165,7 +171,7 @@ p {
 }
 .eyebrow b {
   font-weight: 600;
-  color: var(--blue);
+  color: var(--blue-text);
 }
 .hint {
   margin-top: 8px;
@@ -190,7 +196,7 @@ p {
 }
 .link {
   font: 500 12px var(--sans);
-  color: var(--blue);
+  color: var(--blue-text);
 }
 .link:hover {
   text-decoration: underline;
@@ -665,7 +671,7 @@ p {
 }
 .stat--lead dd {
   font-size: 26px;
-  color: var(--blue);
+  color: var(--blue-text);
 }
 .bar {
   margin-top: 12px;
@@ -736,7 +742,7 @@ p {
 .pinrow__score {
   font: 600 14px var(--mono);
   font-variant-numeric: tabular-nums;
-  color: var(--blue);
+  color: var(--blue-text);
 }
 
 /* ---------- legend ---------- */
@@ -839,7 +845,7 @@ p {
 }
 .card__verdict h3[data-verdict="Strong fit"],
 .card__verdict h3[data-verdict="Good fit"] {
-  color: var(--blue);
+  color: var(--blue-text);
 }
 .card__verdict h3[data-verdict="Weak fit"] {
   color: var(--ink-2);
@@ -1309,7 +1315,7 @@ tr[data-out] .minibar i {
 .welcome__steps li::before {
   content: "0" counter(s);
   font: 600 11px/1.9 var(--mono);
-  color: var(--blue);
+  color: var(--blue-text);
 }
 .welcome__steps b {
   color: var(--ink);
@@ -1908,7 +1914,7 @@ tr[data-out] .minibar i {
   display: grid;
   place-items: center;
   height: 18px;
-  color: var(--blue);
+  color: var(--blue-text);
 }
 .menu__label {
   display: block;
@@ -1917,7 +1923,7 @@ tr[data-out] .minibar i {
   white-space: nowrap;
 }
 .menu__option[aria-selected="true"] .menu__label {
-  color: var(--blue);
+  color: var(--blue-text);
 }
 .menu__detail {
   display: block;
@@ -1982,7 +1988,7 @@ dt[data-tip] {
 
 /* ---------- AI: brief → plan, pin card, ad angles ---------- */
 .ai-mark {
-  color: var(--blue);
+  color: var(--blue-text);
   font-size: 0.95em;
 }
 .btn--sm {
@@ -2179,7 +2185,7 @@ dt[data-tip] {
   margin-top: 3px;
   font-size: 11.5px;
   line-height: 1.4;
-  color: var(--blue);
+  color: var(--blue-text);
 }
 :root[data-theme="dark"] .factor__ai,
 :root[data-theme="dark"] .ai-mark {
@@ -2238,7 +2244,7 @@ dt[data-tip] {
   font: 500 9.5px var(--mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--blue);
+  color: var(--blue-text);
 }
 .angle__headline {
   margin-top: 4px;
@@ -2740,6 +2746,7 @@ dt[data-tip] {
     --muted: #6e7178;
     --line: rgba(5, 6, 8, 0.14);
     --blue: #1626ff;
+    --blue-text: #1626ff;
     color-scheme: light;
   }
   html,
@@ -2807,7 +2814,7 @@ dt[data-tip] {
   .pp__stats dd {
     margin: 2pt 0 0;
     font: 600 15pt var(--sans);
-    color: var(--blue);
+    color: var(--blue-text);
   }
   .pp__map {
     display: block;
