@@ -77,6 +77,7 @@ export function TopBar() {
           type="button"
           className="btn btn--ghost"
           onClick={() => open("data")}
+          disabled={!release}
           data-tip="What was cleaned, what's covered, and how scores work"
         >
           About the data

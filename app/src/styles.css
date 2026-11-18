@@ -2921,14 +2921,37 @@ dt[data-tip] {
   color: var(--muted);
 }
 @media (max-width: 900px) {
-  .top__search {
-    display: none !important;
+  .top__actions .top__search {
+    display: inline-flex;
+  }
+  .top__search kbd {
+    display: none;
   }
 }
 .pinrow__meta {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+@media (max-width: 650px) {
+  .top {
+    height: auto;
+    padding: 6px 12px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .top__actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .top__status {
+    display: none;
+  }
+  .top__actions .btn {
+    padding-inline: 8px;
+  }
 }
 
 /* ---------- client one-pager (print only) ---------- */

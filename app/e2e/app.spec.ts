@@ -2,11 +2,26 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { offlineExtras, openPlan } from "./helpers";
 
-test("a first-time visitor is welcomed and walked through the app", async ({ page }) => {
+test("first-time visitors can safely wait for data and complete the tour", async ({ page }) => {
   await offlineExtras(page);
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/data/index.json", async (route) => {
+    await pending;
+    await route.continue();
+  });
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Find the neighbourhoods worth paying for." })).toBeVisible({ timeout: 20_000 });
-  await page.getByRole("dialog", { name: "Welcome to Catchment" }).getByRole("button", { name: /San Francisco & Oakland/ }).click();
+  try {
+    await expect(page.getByRole("button", { name: "About the data" })).toBeDisabled();
+    await page.keyboard.press("e");
+    await expect(page.getByText("Loading Overture data")).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+  } finally {
+    release();
+  }
+  const welcome = page.getByRole("dialog", { name: "Welcome to Catchment" });
+  await expect(welcome).toBeVisible({ timeout: 40_000 });
+  await welcome.getByRole("button", { name: /San Francisco & Oakland/ }).click();
   const note = page.locator(".tour__note");
   await expect(note).toBeVisible();
   const steps = Number((await note.locator(".tour__count span").textContent())?.replace(/\D/g, ""));
@@ -87,3 +102,22 @@ for (const theme of ["light", "dark"] as const) {
     expect(serious.map((v) => `${v.id}: ${v.help} (${v.nodes.length})`)).toEqual([]);
   });
 }
+
+test("an incomplete share link recovers to a working plan", async ({ page }) => {
+  await openPlan(page, "/#/%");
+  await expect(page).toHaveURL(/#\/sf-bay\?/);
+  await expect(page.getByRole("button", { name: "Export plan" })).toBeEnabled();
+});
+
+test("phone users can export and find sharing without horizontal scrolling", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openPlan(page);
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    await expect(page.getByRole("button", { name: "Export plan" })).toBeInViewport({ ratio: 1 });
+  }
+  await page.getByRole("button", { name: "Search" }).click();
+  await page.getByRole("combobox").fill("copy link");
+  await expect(page.getByRole("option", { name: /Copy link to this plan/ })).toBeVisible();
+});

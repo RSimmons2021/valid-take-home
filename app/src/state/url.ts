@@ -23,7 +23,13 @@ export function encode(s: PlanState): string {
 export function decode(hash: string): Partial<PlanState> {
   const m = /^#\/([^?]+)(?:\?(.*))?$/.exec(hash);
   if (!m) return {};
-  const out: Partial<PlanState> = { metroId: decodeURIComponent(m[1]) };
+  let metroId: string;
+  try {
+    metroId = decodeURIComponent(m[1]);
+  } catch {
+    return {};
+  }
+  const out: Partial<PlanState> = { metroId };
   const q = new URLSearchParams(m[2] ?? "");
   const p = q.get("p");
   if (p) out.profileId = p;

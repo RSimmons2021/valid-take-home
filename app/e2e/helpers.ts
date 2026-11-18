@@ -21,9 +21,5 @@ export async function openPlan(page: Page, url = PLAN) {
   });
   await page.goto(url);
   await expect(page.locator(".pinrow").first()).toBeVisible({ timeout: 40_000 });
-  // Dismiss guidance if a build shows it anyway.
-  for (let i = 0; i < 2; i++) {
-    if (await page.locator("dialog[open], .tour__note").count()) await page.keyboard.press("Escape");
-  }
   await expect(page.locator("dialog[open], .tour__note")).toHaveCount(0);
 }

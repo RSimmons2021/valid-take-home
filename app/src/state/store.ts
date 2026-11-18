@@ -222,7 +222,7 @@ export const useStore = create<Store>((set, get) => {
       }
       // First visit, even through a shared link: a reviewer opening a plan someone sent
       // still gets the welcome, then the guided tour.
-      if (!remembered(SEEN_WELCOME)) set({ dialog: "welcome" });
+      if (get().metro && !get().error && !remembered(SEEN_WELCOME)) set({ dialog: "welcome" });
     },
 
     async setMetro(id) {
@@ -298,6 +298,7 @@ export const useStore = create<Store>((set, get) => {
       if (get().peek !== peek) set({ peek });
     },
     open(dialog) {
+      if (dialog && !get().metro) return;
       const closingWelcome = get().dialog === "welcome" && dialog !== "welcome";
       set({ dialog });
       if (closingWelcome) {
