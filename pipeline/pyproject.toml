@@ -1,0 +1,27 @@
+[project]
+name = "catchment-pipeline"
+version = "1.0.0"
+description = "Extracts Overture Maps data and rolls it up to H3 cells for the Catchment app."
+requires-python = ">=3.12"
+dependencies = [
+    "duckdb>=2.0.0",
+    "h3>=4.5.0",
+    "pyarrow>=26.0.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.5",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
