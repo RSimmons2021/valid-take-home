@@ -26,6 +26,8 @@ interface Store extends PlanState {
   view3d: boolean;
   /** current step of the guided tour, or null when it isn't showing */
   tour: number | null;
+  /** lift-test ZIPs drawn on the map, or null */
+  liftOverlay: { test: string[]; control: string[] } | null;
 
   boot(): Promise<void>;
   setMetro(id: string): Promise<void>;
@@ -44,6 +46,7 @@ interface Store extends PlanState {
   requestFrame(): void;
   setView3d(on: boolean): void;
   startTour(): void;
+  setLiftOverlay(o: { test: string[]; control: string[] } | null): void;
   setTourStep(step: number): void;
   endTour(): void;
 }
@@ -122,6 +125,7 @@ export const useStore = create<Store>((set, get) => {
     frameRequest: 0,
     view3d: false,
     tour: null,
+    liftOverlay: null,
 
     async boot() {
       const fromUrl = decode(location.hash);
@@ -148,7 +152,7 @@ export const useStore = create<Store>((set, get) => {
 
     async setMetro(id) {
       const summary = get().index?.metros.find((m) => m.id === id);
-      set({ loading: summary?.name ?? id, error: null, selected: null, hovered: null, focusedPin: null });
+      set({ loading: summary?.name ?? id, error: null, selected: null, hovered: null, focusedPin: null, liftOverlay: null });
       try {
         let metro = cache.get(id);
         if (!metro) {
@@ -212,6 +216,9 @@ export const useStore = create<Store>((set, get) => {
     },
     setView3d(view3d) {
       set({ view3d });
+    },
+    setLiftOverlay(liftOverlay) {
+      set({ liftOverlay });
     },
     startTour() {
       if (!get().metro) return;

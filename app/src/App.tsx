@@ -72,6 +72,8 @@ function Legend() {
   const view3d = useStore((s) => s.view3d);
   const setView3d = useStore((s) => s.setView3d);
   const theme = useTheme((s) => s.theme);
+  const liftOverlay = useStore((s) => s.liftOverlay);
+  const setLiftOverlay = useStore((s) => s.setLiftOverlay);
   const lowUnits = metro.ledger.addresses.units_per_rooftop < 1.2;
   return (
     <div className="legend">
@@ -88,6 +90,15 @@ function Legend() {
         <button type="button" className="legend__warn" onClick={() => open("data")}>
           Apartment units not listed here ⓘ
         </button>
+      )}
+      {liftOverlay && (
+        <span className="legend__lift">
+          <i className="legend__swatch legend__swatch--test" aria-hidden="true" /> test
+          <i className="legend__swatch legend__swatch--control" aria-hidden="true" /> control
+          <button type="button" className="link" onClick={() => setLiftOverlay(null)} data-tip="Hide the lift test ZIPs">
+            Hide
+          </button>
+        </span>
       )}
       <span className="segmented segmented--small legend__view" role="radiogroup" aria-label="Map view">
         <button type="button" role="radio" aria-checked={!view3d} onClick={() => setView3d(false)} data-tip="Flat map">

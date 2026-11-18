@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { googleRadiusLines, pinsCsv, planGeoJson, plannedZips, zipsCsv } from "../model/export";
 import { profileById } from "../model/profiles";
 import { useStore } from "../state/store";
+import { LiftTab } from "./LiftTab";
 import { ResultsDialog } from "./ResultsDialog";
 import { Glyph } from "./TopBar";
 import { activeSteps } from "./tour/steps";
@@ -50,7 +51,7 @@ export function Dialogs() {
   return null;
 }
 
-type Tab = "zips" | "google" | "files";
+type Tab = "zips" | "google" | "lift" | "files";
 
 function ExportDialog({ onClose }: { onClose: () => void }) {
   const metro = useStore((s) => s.metro)!;
@@ -81,6 +82,7 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
           [
             ["zips", "ZIP codes", "Meta & Google"],
             ["google", "Radius pins", "Google Ads bulk"],
+            ["lift", "Lift test", "Prove it worked"],
             ["files", "Files", "CSV · GeoJSON"],
           ] as const
         ).map(([id, label, sub]) => (
@@ -168,6 +170,8 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
           <pre className="export__code">{googleText}</pre>
         </div>
       )}
+
+      {tab === "lift" && <LiftTab minShare={minShare} base={base} />}
 
       {tab === "files" && (
         <div className="export export--files">

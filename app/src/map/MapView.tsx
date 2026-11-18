@@ -74,6 +74,7 @@ export function MapView() {
   const focusedPin = useStore((s) => s.focusedPin);
   const frameRequest = useStore((s) => s.frameRequest);
   const view3d = useStore((s) => s.view3d);
+  const liftOverlay = useStore((s) => s.liftOverlay);
   const theme = useTheme((s) => s.theme);
   const palette = PALETTES[theme];
 
@@ -124,6 +125,18 @@ export function MapView() {
   const ids = metro?.ids;
   const data = useMemo(() => (metro ? Array.from({ length: metro.n }, (_, i) => i) : []), [metro]);
   const focusCell = selected ?? hovered;
+  // Cells of the lift test's ZIPs, tagged 1 = test, 2 = control.
+  const liftCells = useMemo(() => {
+    if (!metro || !liftOverlay) return [];
+    const role = new Map<string, number>([...liftOverlay.test.map((z) => [z, 1] as const), ...liftOverlay.control.map((z) => [z, 2] as const)]);
+    const out: { i: number; role: number }[] = [];
+    for (let i = 0; i < metro.n; i++) {
+      const z = metro.zip[i];
+      const r = z >= 0 ? role.get(metro.zips[z].code) : undefined;
+      if (r) out.push({ i, role: r });
+    }
+    return out;
+  }, [metro, liftOverlay]);
   const evidence = useMemo(
     () => (metro && result && focusCell != null ? evidenceFor(metro, result, focusCell) : []),
     [metro, result, focusCell],
@@ -193,6 +206,19 @@ export function MapView() {
           updateTriggers: { getFillColor: [focus, theme], getLineColor: [focus, theme], getLineWidth: [focus] },
           ...UNDER_BUILDINGS,
         }),
+        new H3HexagonLayer<{ i: number; role: number }>({
+          id: "lift-overlay",
+          data: liftCells,
+          getHexagon: (d) => ids[d.i],
+          extruded: false,
+          stroked: true,
+          filled: true,
+          getFillColor: (d) => (d.role === 1 ? [22, 38, 255, 0] : [255, 184, 31, theme === "dark" ? 70 : 90]),
+          getLineColor: (d) => (d.role === 1 ? palette.prefer : [255, 160, 0, 230]),
+          getLineWidth: 1.2,
+          lineWidthUnits: "pixels",
+          updateTriggers: { getFillColor: [theme], getLineColor: [theme] },
+        }),
         new LineLayer<Evidence>({
           id: "evidence-links",
           data: evidence,
@@ -233,7 +259,7 @@ export function MapView() {
         }),
       ],
     });
-  }, [metro, result, plan, selected, focusedPin, data, ids, evidence, view3d, theme, palette]);
+  }, [metro, result, plan, selected, focusedPin, data, ids, evidence, view3d, theme, palette, liftCells]);
 
   // Pin markers (HTML, so the numbers use the interface type). Only pins that are new to
   // the plan drop in, so tuning a weight doesn't replay the animation on every pin.
