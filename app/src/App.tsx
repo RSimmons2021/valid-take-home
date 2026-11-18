@@ -7,6 +7,7 @@ import { BusinessPanel } from "./ui/BusinessPanel";
 import { CellCard } from "./ui/CellCard";
 import { Dialogs } from "./ui/Dialogs";
 import { PlanPanel } from "./ui/PlanPanel";
+import { TooltipLayer } from "./ui/Tooltip";
 import { TopBar } from "./ui/TopBar";
 import { Tour } from "./ui/tour/Tour";
 import { useToasts } from "./ui/toast";
@@ -54,6 +55,7 @@ export function App() {
       {metro && <PlanPanel />}
       <Dialogs />
       <Tour />
+      <TooltipLayer />
       <Toasts />
     </div>
   );
@@ -69,25 +71,25 @@ function Legend() {
   const lowUnits = metro.ledger.addresses.units_per_rooftop < 1.2;
   return (
     <div className="legend">
-      <span className="legend__item">
+      <span className="legend__item" data-tip="Blocks below the city median for your customer. Pins ignore them.">
         <i className="legend__low" aria-hidden="true" /> Below average
       </span>
-      <span className="legend__ramp" title="Darker blue means a better fit for your customer">
+      <span className="legend__ramp" data-tip="Darker blue means a better fit for your customer">
         <span>Good fit</span>
         <i style={{ background: rampCss(PALETTES[theme]) }} aria-hidden="true" />
         <span>Best fit</span>
       </span>
-      <span className="legend__item legend__muted">Unshaded: under {minHomes} homes</span>
+      <span className="legend__item legend__muted" data-tip="Raise or lower this floor in the Business panel">Unshaded: under {minHomes} homes</span>
       {lowUnits && (
         <button type="button" className="legend__warn" onClick={() => open("data")}>
           Apartment units not listed here ⓘ
         </button>
       )}
       <span className="segmented segmented--small legend__view" role="radiogroup" aria-label="Map view">
-        <button type="button" role="radio" aria-checked={!view3d} onClick={() => setView3d(false)}>
+        <button type="button" role="radio" aria-checked={!view3d} onClick={() => setView3d(false)} data-tip="Flat map">
           2D
         </button>
-        <button type="button" role="radio" aria-checked={view3d} onClick={() => setView3d(true)} title="Raise each cell by its number of homes">
+        <button type="button" role="radio" aria-checked={view3d} onClick={() => setView3d(true)} data-tip="Raise each block by its number of homes">
           3D
         </button>
       </span>

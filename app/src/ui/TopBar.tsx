@@ -1,6 +1,7 @@
 import { useStore } from "../state/store";
 import { type ThemePref, useTheme } from "../state/theme";
-import { copy } from "./format";
+import { Select } from "./Select";
+import { compact, copy } from "./format";
 import { toast } from "./toast";
 
 export function TopBar() {
@@ -22,21 +23,20 @@ export function TopBar() {
       <span className="top__sep" aria-hidden="true">
         /
       </span>
-      <label className="metro-select">
-        <span className="sr-only">Metro</span>
-        <select value={metroId} onChange={(e) => void setMetro(e.target.value)} disabled={!index}>
-          {index?.metros.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name}
-            </option>
-          ))}
-        </select>
-        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-          <path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
-        </svg>
-      </label>
+      <Select
+        label="Metro"
+        value={metroId}
+        disabled={!index}
+        tip="Switch city. Each one is a separate Overture extract."
+        options={(index?.metros ?? []).map((m) => ({
+          value: m.id,
+          label: m.name,
+          detail: `${m.region} · ${compact(m.homes)} homes · ${compact(m.places_kept)} places`,
+        }))}
+        onChange={(id) => void setMetro(id)}
+      />
       {release && !loading && (
-        <span className="top__release" title="Every number on this page comes from this Overture Maps release">
+        <span className="top__release" data-tip="Every number on this page comes from this Overture Maps release">
           <i className="live" aria-hidden="true" /> Overture {release}
         </span>
       )}
@@ -46,24 +46,31 @@ export function TopBar() {
         </span>
       )}
       <nav className="top__actions" aria-label="Plan actions">
-        <button type="button" className="btn btn--ghost top__guide" onClick={startTour} disabled={!release}>
+        <button type="button" className="btn btn--ghost top__guide" onClick={startTour} disabled={!release} data-tip="Replay the guided tour">
           <span className="top__guide-mark" aria-hidden="true">
             ?
           </span>
           Guide
         </button>
         <ThemeToggle />
-        <button type="button" className="btn btn--ghost" onClick={() => open("data")}>
+        <button type="button" className="btn btn--ghost" onClick={() => open("data")} data-tip="What was cleaned, what's covered, and how scores work">
           About the data
         </button>
         <button
           type="button"
           className="btn btn--ghost"
+          data-tip="The link rebuilds this exact plan for whoever opens it"
           onClick={async () => toast((await copy(location.href)) ? "Link copied. It rebuilds this exact plan." : "Couldn't copy. Use the address bar.")}
         >
           Copy link
         </button>
-        <button type="button" className="btn btn--primary" onClick={() => open("export")} disabled={!plan?.pins.length}>
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={() => open("export")}
+          disabled={!plan?.pins.length}
+          data-tip="ZIP lists and radius pins for Meta and Google Ads"
+        >
           Export plan <span aria-hidden="true">↓</span>
         </button>
       </nav>
@@ -87,7 +94,7 @@ function ThemeToggle() {
   const pref = useTheme((s) => s.pref);
   const cycle = useTheme((s) => s.cycle);
   return (
-    <button type="button" className="iconbtn" onClick={cycle} aria-label={`${THEME_LABEL[pref]}. Click to change.`} title={THEME_LABEL[pref]}>
+    <button type="button" className="iconbtn" onClick={cycle} aria-label={`${THEME_LABEL[pref]}. Click to change.`} data-tip={`${THEME_LABEL[pref]} · click to change`}>
       <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
         {pref === "light" && (
           <g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">

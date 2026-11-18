@@ -23,7 +23,7 @@ function Modal({ title, onClose, children, wide }: { title: string; onClose: () 
       }}
     >
       <div className="modal__body">
-        <button type="button" className="modal__close" aria-label="Close" onClick={() => ref.current?.close()}>
+        <button type="button" className="modal__close" aria-label="Close" data-tip="Close (Esc)" onClick={() => ref.current?.close()}>
           ×
         </button>
         {children}
@@ -278,7 +278,7 @@ function DataDialog({ onClose }: { onClose: () => void }) {
           <h3>Signals</h3>
           <ul className="kv kv--signals">
             {signals.map((s) => (
-              <li key={s.id} title={s.description}>
+              <li key={s.id} data-tip={s.description}>
                 <span>{s.label}</span>
                 <b>{int(L.signal_places[s.id] ?? 0)}</b>
               </li>

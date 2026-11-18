@@ -27,13 +27,14 @@ export function PlanPanel() {
               Pins
             </span>
             <div className="stepper" role="group" aria-labelledby="pins-label">
-              <button type="button" aria-label="Fewer pins" onClick={() => setPins(Math.max(1, pins - 1))} disabled={pins <= 1}>
+              <button type="button" aria-label="Fewer pins" data-tip="Fewer pins" onClick={() => setPins(Math.max(1, pins - 1))} disabled={pins <= 1}>
                 −
               </button>
               <output aria-live="polite">{pins}</output>
               <button
                 type="button"
                 aria-label="More pins"
+                data-tip="More pins"
                 onClick={() => setPins(Math.min(MAX_PINS, pins + 1))}
                 disabled={pins >= MAX_PINS}
               >
@@ -47,7 +48,14 @@ export function PlanPanel() {
             </span>
             <div className="segmented" role="radiogroup" aria-labelledby="radius-label">
               {RADIUS_OPTIONS_MI.map((r) => (
-                <button key={r} type="button" role="radio" aria-checked={r === radiusMi} onClick={() => setRadius(r)}>
+                <button
+                  key={r}
+                  type="button"
+                  role="radio"
+                  aria-checked={r === radiusMi}
+                  onClick={() => setRadius(r)}
+                  data-tip={r === 1 ? "1 mile: the smallest radius Meta allows" : `Each pin covers a ${r}-mile radius`}
+                >
                   {r}
                   <small> mi</small>
                 </button>
@@ -60,15 +68,17 @@ export function PlanPanel() {
           <>
             <dl className="stats">
               <div className="stat stat--lead">
-                <dt>Homes reached</dt>
+                <dt data-tip="Addresses inside the pins, with apartment units counted where the county lists them">Homes reached</dt>
                 <dd>{compact(plan.homes)}</dd>
               </div>
               <div className="stat">
-                <dt title="Share of reached homes in cells scoring 50 or more. The rest is paid-for spill.">On target</dt>
+                <dt data-tip="Share of reached homes in cells scoring 50 or more. The rest is spill you'd pay for anyway.">On target</dt>
                 <dd>{pct(onShare)}</dd>
               </div>
               <div className="stat">
-                <dt title={`Of the ${int(plan.metroOnTargetHomes)} on-target homes in ${metro.info.name}`}>Captured</dt>
+                <dt data-tip={`How many of the ${int(plan.metroOnTargetHomes)} well-matched homes in ${metro.info.name} these pins reach`}>
+                  Captured
+                </dt>
                 <dd>{pct(plan.capture)}</dd>
               </div>
             </dl>
@@ -88,7 +98,7 @@ export function PlanPanel() {
 
             <div className="panel__head">
               <p className="eyebrow">Pins, best first</p>
-              <button type="button" className="link" onClick={requestFrame}>
+              <button type="button" className="link" onClick={requestFrame} data-tip="Zoom out to show every pin">
                 Fit all
               </button>
             </div>
@@ -110,7 +120,7 @@ export function PlanPanel() {
                           {p.label.zip ?? "no ZIP"} · {compact(p.homes)} homes · {pct(on)} on target
                         </span>
                       </span>
-                      <span className="pinrow__score" title="Homes-weighted mean score">
+                      <span className="pinrow__score" data-tip="Average fit score inside this pin, weighted by homes">
                         {Number.isNaN(p.meanScore) ? "–" : Math.round(p.meanScore)}
                       </span>
                     </button>

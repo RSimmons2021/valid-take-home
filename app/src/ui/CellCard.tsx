@@ -33,7 +33,7 @@ export function CellCard() {
 
   return (
     <aside className="card" aria-labelledby="card-title">
-      <button type="button" className="card__close" aria-label="Close" onClick={() => select(null)}>
+      <button type="button" className="card__close" aria-label="Close" data-tip="Close (Esc)" onClick={() => select(null)}>
         ×
       </button>
       <p className="eyebrow">
@@ -60,19 +60,19 @@ export function CellCard() {
 
       <dl className="facts">
         <div>
-          <dt>Homes</dt>
+          <dt data-tip="Address points in this block; apartment units count separately where listed">Homes</dt>
           <dd>{int(metro.homes[i])}</dd>
         </div>
         <div>
-          <dt>Detached</dt>
+          <dt data-tip="Share of rooftops with a single address and no units: houses, not apartment blocks">Detached</dt>
           <dd>{metro.rooftops[i] >= 5 ? `${Math.round(metro.single[i] * 100)}%` : "–"}</dd>
         </div>
         <div>
-          <dt>Buildings</dt>
+          <dt data-tip="Building footprints in this block, from Overture buildings">Buildings</dt>
           <dd>{int(metro.buildings[i])}</dd>
         </div>
         <div>
-          <dt>Typical height</dt>
+          <dt data-tip="Median building height in this block">Typical height</dt>
           <dd>{Number.isNaN(height) ? "–" : `${Math.round(height)} m`}</dd>
         </div>
       </dl>
@@ -125,7 +125,7 @@ export function CellCard() {
                         key={k}
                         type="button"
                         className="placechip"
-                        title={`GERS ${metro.places.id[k]} · confidence ${metro.places.confidence[k].toFixed(2)}. Click to copy the ID.`}
+                        data-tip={`Overture GERS ID ${metro.places.id[k].slice(0, 8)}… · confidence ${metro.places.confidence[k].toFixed(2)} · click to copy the ID`}
                         onClick={async () => {
                           if (await copy(metro.places.id[k])) toast("GERS ID copied");
                         }}

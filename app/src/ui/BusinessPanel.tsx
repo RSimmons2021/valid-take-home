@@ -2,8 +2,16 @@ import { useMemo, useState } from "react";
 import { WEIGHTS, WEIGHT_LABEL, type Factor, type Weight, factorsFor } from "../model/factors";
 import { PROFILES, isPristine, profileById } from "../model/profiles";
 import { useStore } from "../state/store";
+import { Select } from "./Select";
 
 const MIN_HOMES = [0, 10, 25, 50, 100];
+const MIN_HOMES_DETAIL: Record<number, string> = {
+  0: "Scores parks and industrial land too",
+  10: "Includes very sparse blocks",
+  25: "Recommended: skips parks and empty lots",
+  50: "Only clearly residential blocks",
+  100: "Dense neighbourhoods only",
+};
 
 export function BusinessPanel() {
   const metro = useStore((s) => s.metro);
@@ -35,6 +43,7 @@ export function BusinessPanel() {
               aria-checked={p.id === profileId}
               className="profile"
               onClick={() => setProfile(p.id)}
+              data-tip={p.id === profileId ? undefined : `Switch to ${p.label.toLowerCase()} weights`}
             >
               {p.label}
             </button>
@@ -70,14 +79,20 @@ export function BusinessPanel() {
         )}
 
         <div className="field">
-          <label htmlFor="min-homes">Only score cells with at least</label>
-          <select id="min-homes" value={minHomes} onChange={(e) => setMinHomes(Number(e.target.value))}>
-            {MIN_HOMES.map((n) => (
-              <option key={n} value={n}>
-                {n === 0 ? "any number of" : n} homes
-              </option>
-            ))}
-          </select>
+          <span className="field__label" id="min-homes-label">
+            Only score cells with at least
+          </span>
+          <Select
+            variant="field"
+            label="Only score cells with at least"
+            value={minHomes}
+            options={MIN_HOMES.map((n) => ({
+              value: n,
+              label: n === 0 ? "Any number of homes" : `${n} homes`,
+              detail: MIN_HOMES_DETAIL[n],
+            }))}
+            onChange={setMinHomes}
+          />
           <p className="hint">Cells are ~0.1 km². Sparse cells (parks, industrial land, water) stay unscored.</p>
         </div>
       </div>
@@ -114,7 +129,7 @@ function FactorRow({
             role="radio"
             aria-checked={w === weight}
             aria-label={WEIGHT_LABEL[w]}
-            title={WEIGHT_LABEL[w]}
+            data-tip={WEIGHT_LABEL[w]}
             className={`weight__step weight__step--${w < 0 ? "neg" : w > 0 ? "pos" : "zero"}`}
             data-mag={Math.abs(w)}
             onClick={() => onChange(factor.id, w)}

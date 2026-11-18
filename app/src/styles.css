@@ -280,29 +280,6 @@ p {
   color: var(--muted);
   font-weight: 300;
 }
-.metro-select {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-.metro-select select {
-  appearance: none;
-  height: 32px;
-  padding: 0 28px 0 10px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  font: 500 14px var(--sans);
-  cursor: pointer;
-}
-.metro-select select:hover {
-  background: var(--hover);
-}
-.metro-select svg {
-  position: absolute;
-  right: 10px;
-  pointer-events: none;
-}
 .top__status {
   display: inline-flex;
   align-items: center;
@@ -595,19 +572,11 @@ p {
   padding-top: 16px;
   border-top: 1px solid var(--line);
 }
-.field label {
+.field__label {
   display: block;
+  margin-bottom: 6px;
   font-size: 12.5px;
   color: var(--ink-2);
-}
-.field select {
-  margin-top: 6px;
-  height: 32px;
-  padding: 0 8px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--card);
-  font-size: 13px;
 }
 
 /* plan panel */
@@ -1847,4 +1816,166 @@ tr[data-out] .minibar i {
     stroke-dashoffset: 0;
     animation: none;
   }
+}
+
+/* ---------- select: themed trigger + listbox menu ---------- */
+.select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font: 500 14px var(--sans);
+  color: var(--ink);
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+.select:hover:not(:disabled),
+.select[aria-expanded="true"] {
+  background: var(--hover);
+}
+.select__chev {
+  color: var(--muted);
+  transition: transform 0.18s;
+}
+.select[aria-expanded="true"] .select__chev {
+  transform: rotate(180deg);
+}
+.select--field {
+  width: 100%;
+  justify-content: space-between;
+  height: 36px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-size: 13px;
+}
+.select--field:hover:not(:disabled),
+.select--field[aria-expanded="true"] {
+  border-color: var(--line-strong);
+  background: var(--card);
+}
+.menu {
+  position: fixed;
+  z-index: 60;
+  margin: 0;
+  padding: 5px;
+  list-style: none;
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  outline: none;
+  transform-origin: top left;
+  animation: menu-in 0.14s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.menu--up {
+  transform-origin: bottom left;
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+.menu--up {
+  animation-name: menu-in-up;
+}
+@keyframes menu-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+.menu__option {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 8px;
+  align-items: start;
+  padding: 8px 12px 8px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.menu__option[data-active] {
+  background: var(--hover);
+}
+.menu:focus-visible .menu__option[data-active] {
+  box-shadow: inset 0 0 0 1.5px var(--blue);
+}
+.menu__check {
+  display: grid;
+  place-items: center;
+  height: 18px;
+  color: var(--blue);
+}
+.menu__label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.menu__option[aria-selected="true"] .menu__label {
+  color: var(--blue);
+}
+.menu__detail {
+  display: block;
+  margin-top: 2px;
+  font: 400 11px var(--mono);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ---------- tooltip ---------- */
+.tooltip {
+  position: fixed;
+  z-index: 70;
+  /* fixed + left near the edge would shrink-to-fit to a sliver; size to content instead */
+  width: max-content;
+  max-width: 260px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--solid);
+  color: var(--on-solid);
+  font: 500 12px/1.4 var(--sans);
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  box-shadow: 0 8px 22px -8px rgba(0, 0, 0, 0.45);
+  animation: tip-in 0.12s ease-out;
+}
+.tooltip--below {
+  transform: translate(-50%, 0);
+}
+.tooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 8px;
+  height: 8px;
+  background: inherit;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 1px;
+}
+.tooltip--below::after {
+  bottom: auto;
+  top: -4px;
+}
+@keyframes tip-in {
+  from {
+    opacity: 0;
+  }
+}
+[data-tip] {
+  cursor: default;
+}
+button[data-tip],
+dt[data-tip] {
+  cursor: pointer;
+}
+dt[data-tip] {
+  cursor: help;
+  text-decoration: underline dotted var(--line-strong);
+  text-underline-offset: 3px;
 }
