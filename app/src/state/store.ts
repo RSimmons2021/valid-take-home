@@ -7,7 +7,7 @@ import { DEFAULT_PROFILE, profileById } from "../model/profiles";
 import { type ScoreResult, scoreCells } from "../model/score";
 import { type PlanState, decode, encode } from "./url";
 
-export type Dialog = "export" | "data" | "welcome" | null;
+export type Dialog = "export" | "data" | "welcome" | "results" | null;
 
 interface Store extends PlanState {
   index: IndexFile | null;

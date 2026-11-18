@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { googleRadiusLines, pinsCsv, planGeoJson, plannedZips, zipsCsv } from "../model/export";
 import { profileById } from "../model/profiles";
 import { useStore } from "../state/store";
+import { ResultsDialog } from "./ResultsDialog";
 import { Glyph } from "./TopBar";
 import { activeSteps } from "./tour/steps";
 import { compact, copy, download, int, pct, slug } from "./format";
@@ -40,6 +41,12 @@ export function Dialogs() {
   if (dialog === "export") return <ExportDialog onClose={close} />;
   if (dialog === "data") return <DataDialog onClose={close} />;
   if (dialog === "welcome") return <WelcomeDialog onClose={close} />;
+  if (dialog === "results")
+    return (
+      <Modal title="Learn from results" onClose={close} wide>
+        <ResultsDialog />
+      </Modal>
+    );
   return null;
 }
 

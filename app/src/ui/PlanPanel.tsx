@@ -138,6 +138,15 @@ export function PlanPanel() {
         <button type="button" className="btn btn--primary btn--block" onClick={() => open("export")} disabled={!plan?.pins.length}>
           Export to Meta &amp; Google <span aria-hidden="true">↓</span>
         </button>
+        <button
+          type="button"
+          className="btn btn--ghost btn--block panel__secondary"
+          onClick={() => open("results")}
+          disabled={!plan?.pins.length}
+          data-tip="Ran this plan? Bring conversions by ZIP and see which weights would have ranked them better"
+        >
+          Learn from results
+        </button>
       </div>
     </section>
   );
