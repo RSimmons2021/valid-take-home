@@ -51,7 +51,8 @@ export function useFlip(container: RefObject<HTMLElement | null>, deps: unknown[
       if (before === undefined || reduced()) continue;
       const dy = before - top;
       if (Math.abs(dy) < 1) continue;
-      item.animate([{ transform: `translateY(${dy}px)` }, { transform: "translateY(0)" }], { duration: 320, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
+      // --ease-in-out: the row is moving on screen, not arriving
+      item.animate([{ transform: `translateY(${dy}px)` }, { transform: "translateY(0)" }], { duration: 280, easing: "cubic-bezier(0.77, 0, 0.175, 1)" });
     }
     last.current = next;
   }, deps);

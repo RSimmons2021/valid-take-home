@@ -19,7 +19,7 @@ interface Command {
   run: () => void | Promise<void>;
 }
 
-const MOD = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl+";
+import { KEYS } from "./shortcuts";
 
 export function undoToast(what: string | null, verb: "Undid" | "Redid") {
   toast(what ? `${verb} ${what} change` : `Nothing to ${verb === "Undid" ? "undo" : "redo"}`);
@@ -68,14 +68,29 @@ export function CommandPalette() {
 
   const commands = useMemo<Command[]>(() => {
     const c: Command[] = [
-      { id: "export", group: "Actions", label: "Export plan", hint: "ZIPs, radius pins, lift test, files", run: () => s.open("export") },
+      { id: "export", group: "Actions", label: "Export plan", hint: "ZIPs, radius pins, lift test, files", keys: KEYS.export, run: () => s.open("export") },
       { id: "results", group: "Actions", label: "Learn from results", hint: "Calibrate weights from campaign data", run: () => s.open("results") },
       { id: "copy", group: "Actions", label: "Copy link to this plan", run: async () => toast((await copy((await shareLink()).url)) ? "Link copied" : "Couldn't copy") },
-      { id: "print", group: "Actions", label: "Client one-pager (print or PDF)", keys: `${MOD}P`, run: () => void window.dispatchEvent(new Event("catchment:print")) },
-      { id: "undo", group: "Actions", label: "Undo", keys: `${MOD}Z`, run: async () => undoToast(await s.undo(), "Undid") },
-      { id: "redo", group: "Actions", label: "Redo", keys: `⇧${MOD}Z`, run: async () => undoToast(await s.redo(), "Redid") },
-      { id: "fit", group: "Actions", label: "Fit all pins in view", run: () => s.requestFrame() },
-      { id: "3d", group: "Actions", label: s.view3d ? "Switch to 2D map" : "Switch to 3D map", run: () => s.setView3d(!s.view3d) },
+      { id: "print", group: "Actions", label: "Client one-pager (print or PDF)", keys: KEYS.print, run: () => void window.dispatchEvent(new Event("catchment:print")) },
+      { id: "undo", group: "Actions", label: "Undo", keys: KEYS.undo, run: async () => undoToast(await s.undo(), "Undid") },
+      { id: "redo", group: "Actions", label: "Redo", keys: KEYS.redo, run: async () => undoToast(await s.redo(), "Redid") },
+      { id: "fit", group: "Actions", label: "Fit all pins in view", keys: KEYS.fit, run: () => s.requestFrame() },
+      { id: "3d", group: "Actions", label: s.view3d ? "Switch to 2D map" : "Switch to 3D map", keys: KEYS.view3d, run: () => s.setView3d(!s.view3d) },
+      ...(s.plan?.pins.length
+        ? [
+            { id: "next-pin", group: "Actions" as const, label: "Next pin", keys: KEYS.nextPin, run: () => s.focusPin(((s.focusedPin ?? 0) % s.plan!.pins.length) + 1) },
+            {
+              id: "prev-pin",
+              group: "Actions" as const,
+              label: "Previous pin",
+              keys: KEYS.prevPin,
+              run: () => {
+                const n = s.plan!.pins.length;
+                s.focusPin((((s.focusedPin ?? 1) - 2 + n) % n) + 1);
+              },
+            },
+          ]
+        : []),
       { id: "theme", group: "Actions", label: "Change theme", hint: "System → light → dark", run: cycleTheme },
       { id: "data", group: "Actions", label: "About the data", run: () => s.open("data") },
       { id: "guide", group: "Actions", label: "Replay the guided tour", run: () => s.startTour() },

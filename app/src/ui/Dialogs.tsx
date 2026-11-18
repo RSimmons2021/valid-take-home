@@ -9,24 +9,41 @@ import { activeSteps } from "./tour/steps";
 import { compact, copy, download, int, pct, slug } from "./format";
 import { toast } from "./toast";
 
+const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 function Modal({ title, onClose, children, wide }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const d = ref.current;
     if (d && !d.open) d.showModal();
   }, []);
+  // Leave the way it came, a little faster, then really close. Esc, the × and a backdrop
+  // click all go through here; a second Esc mid-exit closes at once (the browser insists).
+  const dismiss = () => {
+    const d = ref.current;
+    if (!d || d.dataset.closing) return;
+    if (reducedMotion()) return d.close();
+    d.dataset.closing = "";
+    const done = () => d.open && d.close();
+    d.addEventListener("animationend", done, { once: true });
+    window.setTimeout(done, 220);
+  };
   return (
     <dialog
       ref={ref}
       className={`modal${wide ? " modal--wide" : ""}`}
       aria-label={title}
       onClose={onClose}
+      onCancel={(e) => {
+        e.preventDefault();
+        dismiss();
+      }}
       onClick={(e) => {
-        if (e.target === ref.current) ref.current.close();
+        if (e.target === ref.current) dismiss();
       }}
     >
       <div className="modal__body">
-        <button type="button" className="modal__close" aria-label="Close" data-tip="Close (Esc)" onClick={() => ref.current?.close()}>
+        <button type="button" className="modal__close" aria-label="Close" data-tip="Close" data-keys="Esc" onClick={dismiss}>
           ×
         </button>
         {children}

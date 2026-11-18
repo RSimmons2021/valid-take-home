@@ -15,6 +15,7 @@ import { PlanPanel } from "./ui/PlanPanel";
 import { TooltipLayer } from "./ui/Tooltip";
 import { TopBar } from "./ui/TopBar";
 import { Tour } from "./ui/tour/Tour";
+import { KEYS, singleKey } from "./ui/shortcuts";
 import { useToasts } from "./ui/toast";
 
 export function App() {
@@ -40,6 +41,22 @@ export function App() {
       if (mod && !typing && e.key.toLowerCase() === "y") {
         e.preventDefault();
         void useStore.getState().redo().then((w) => undoToast(w, "Redid"));
+        return;
+      }
+      const short = singleKey(e);
+      if (short) {
+        const s = useStore.getState();
+        const pins = s.plan?.pins ?? [];
+        e.preventDefault();
+        if (short === "export") s.open("export");
+        else if (short === "fit") s.requestFrame();
+        else if (short === "view3d") s.setView3d(!s.view3d);
+        else if (pins.length) {
+          // [ and ] walk the pins in rank order, wrapping, from whichever is focused
+          const at = s.focusedPin ?? (short === "nextPin" ? 0 : pins.length + 1);
+          const next = short === "nextPin" ? (at % pins.length) + 1 : ((at - 2 + pins.length) % pins.length) + 1;
+          s.focusPin(next);
+        }
         return;
       }
       if (e.key === "Escape") {
@@ -160,10 +177,10 @@ function Legend() {
         </span>
       )}
       <span className="segmented segmented--small legend__view" role="radiogroup" aria-label="Map view">
-        <button type="button" role="radio" aria-checked={!view3d} onClick={() => setView3d(false)} data-tip="Flat map">
+        <button type="button" role="radio" aria-checked={!view3d} onClick={() => setView3d(false)} data-tip="Flat map" data-keys={KEYS.view3d}>
           2D
         </button>
-        <button type="button" role="radio" aria-checked={view3d} onClick={() => setView3d(true)} data-tip="Raise each block by its number of homes">
+        <button type="button" role="radio" aria-checked={view3d} onClick={() => setView3d(true)} data-tip="Raise each block by its number of homes" data-keys={KEYS.view3d}>
           3D
         </button>
       </span>
@@ -176,7 +193,7 @@ function Toasts() {
   return (
     <div className="toasts" aria-live="polite">
       {toasts.map((t) => (
-        <div key={t.id} className="toast">
+        <div key={t.id} className={`toast${t.leaving ? " toast--leaving" : ""}`}>
           {t.text}
         </div>
       ))}

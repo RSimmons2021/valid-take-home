@@ -2,13 +2,17 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 const SHOW_DELAY = 800; // ms of resting on an element before its tooltip appears
-const WARM_DELAY = 250; // a shorter wait when moving straight from one tooltip to the next
+const WARM_DELAY = 60; // moving straight from one tooltip to the next: the user is already reading tips
 const WARM_WINDOW = 400; // how soon after a tooltip closes the next one counts as "straight from"
 const TIP_ID = "app-tooltip";
 
 interface Shown {
   el: HTMLElement;
   text: string;
+  /** keyboard shortcut from `data-keys`, shown as a keycap: shortcuts are learned where you act */
+  keys?: string;
+  /** shown straight after another tip: appears without a fade */
+  warm: boolean;
 }
 
 /**
@@ -31,7 +35,7 @@ export function TooltipLayer() {
     let current: HTMLElement | null = null;
     let keyboard = false;
 
-    const show = (el: HTMLElement) => {
+    const show = (el: HTMLElement, warm = false) => {
       const text = el.dataset.tip;
       if (!text) return;
       current = el;
@@ -40,7 +44,7 @@ export function TooltipLayer() {
         el.dataset.tipPrevDescribedby = prev ?? "";
         el.setAttribute("aria-describedby", prev ? `${prev} ${TIP_ID}` : TIP_ID);
       }
-      setShown({ el, text });
+      setShown({ el, text, keys: el.dataset.keys, warm });
     };
     const hide = () => {
       window.clearTimeout(timer);
@@ -63,7 +67,7 @@ export function TooltipLayer() {
       hide();
       if (!el) return;
       const warm = Date.now() - lastHidden < WARM_WINDOW;
-      timer = window.setTimeout(() => show(el), warm ? WARM_DELAY : SHOW_DELAY);
+      timer = window.setTimeout(() => show(el, warm), warm ? WARM_DELAY : SHOW_DELAY);
     };
     const onOut = (e: PointerEvent) => {
       const to = tipTarget(e.relatedTarget);
@@ -123,7 +127,7 @@ export function TooltipLayer() {
       ref={tipRef}
       id={TIP_ID}
       role="tooltip"
-      className={`tooltip${pos?.below ? " tooltip--below" : ""}`}
+      className={`tooltip${pos?.below ? " tooltip--below" : ""}${shown.warm ? " tooltip--warm" : ""}`}
       style={{
         left: pos?.x ?? -9999,
         top: pos?.y ?? -9999,
@@ -131,6 +135,7 @@ export function TooltipLayer() {
       }}
     >
       {shown.text}
+      {shown.keys && <kbd>{shown.keys}</kbd>}
     </div>,
     document.body,
   );

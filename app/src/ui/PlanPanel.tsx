@@ -4,6 +4,7 @@ import { pinName } from "../model/export";
 import { useRef } from "react";
 import { useStore } from "../state/store";
 import { AnimatedNumber, useFlip } from "./motion";
+import { KEYS } from "./shortcuts";
 import { compact, int, pct } from "./format";
 
 export function PlanPanel() {
@@ -96,7 +97,7 @@ export function PlanPanel() {
               </div>
             </dl>
             <div className="bar" aria-hidden="true">
-              <i style={{ width: pct(onShare) }} />
+              <i style={{ transform: `scaleX(${onShare})` }} />
             </div>
             <p className="hint">
               {pct(onShare)} of the homes these pins reach are in cells that fit. Radius pins start at 1 mile, the smallest Meta allows.
@@ -111,7 +112,7 @@ export function PlanPanel() {
 
             <div className="panel__head">
               <p className="eyebrow">Pins, best first</p>
-              <button type="button" className="link" onClick={requestFrame} data-tip="Zoom out to show every pin">
+              <button type="button" className="link" onClick={requestFrame} data-tip="Zoom out to show every pin" data-keys={KEYS.fit}>
                 Fit all
               </button>
             </div>

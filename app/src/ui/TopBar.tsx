@@ -1,3 +1,4 @@
+import { KEYS } from "./shortcuts";
 import { useStore } from "../state/store";
 import { type ThemePref, useTheme } from "../state/theme";
 import { Select } from "./Select";
@@ -83,6 +84,7 @@ export function TopBar() {
           onClick={() => open("export")}
           disabled={!plan?.pins.length}
           data-tip="ZIP lists and radius pins for Meta and Google Ads"
+          data-keys={KEYS.export}
         >
           Export plan <span aria-hidden="true">↓</span>
         </button>

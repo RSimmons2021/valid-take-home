@@ -68,7 +68,6 @@
     --line-2: rgba(255, 255, 255, 0.06);
     --blue: #4a57ff;
     --blue-ink: #6f7aff;
-  --blue-text: #8a92ff;
     --blue-text: #8a92ff;
     --blue-wash: rgba(74, 87, 255, 0.14);
     --hover: rgba(255, 255, 255, 0.06);
@@ -239,10 +238,15 @@ p {
   transition:
     background-color 0.15s,
     box-shadow 0.15s,
-    transform 0.1s;
+    transform var(--press) var(--ease-out);
 }
-.btn:active:not(:disabled) {
-  transform: translateY(1px);
+.btn:active:not(:disabled),
+.iconbtn:active,
+.profile:active,
+.metrocard:active,
+.filecard:active,
+.segmented button:active {
+  transform: scale(0.97);
 }
 .btn--primary {
   background: var(--blue);
@@ -350,7 +354,7 @@ p {
 }
 .map__tooltip span {
   font: 500 10.5px var(--mono);
-  color: rgba(255, 255, 255, 0.7);
+  color: color-mix(in srgb, var(--on-solid) 72%, transparent);
 }
 .maplibregl-ctrl-bottom-right {
   bottom: 44px;
@@ -498,7 +502,8 @@ p {
   transition:
     background-color 0.15s,
     color 0.15s,
-    border-color 0.15s;
+    border-color 0.15s,
+    transform var(--press) var(--ease-out);
 }
 .profile:hover {
   border-color: var(--line-strong);
@@ -729,7 +734,8 @@ p {
   height: 100%;
   background: var(--blue);
   border-radius: inherit;
-  transition: width 0.3s;
+  transform-origin: left;
+  transition: transform 400ms var(--ease-out);
 }
 .pins {
   list-style: none;
@@ -885,7 +891,7 @@ p {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  animation: rise 0.18s ease-out;
+  animation: rise var(--fast) var(--ease-out);
 }
 @keyframes rise {
   from {
@@ -1075,7 +1081,27 @@ p {
   backdrop-filter: blur(2px);
 }
 .modal[open] {
-  animation: rise 0.2s ease-out;
+  animation: rise var(--base) var(--ease-out);
+}
+.modal[open]::backdrop {
+  animation: fade-in var(--base) var(--ease-out);
+}
+.modal[data-closing] {
+  animation: sink 150ms var(--ease-out) forwards;
+}
+.modal[data-closing]::backdrop {
+  animation: fade-out 150ms var(--ease-out) forwards;
+}
+@keyframes sink {
+  to {
+    opacity: 0;
+    transform: translateY(4px) scale(0.985);
+  }
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
 }
 .modal__body {
   position: relative;
@@ -1448,7 +1474,10 @@ tr[data-out] .minibar i {
   color: var(--on-solid);
   font-size: 13px;
   box-shadow: var(--shadow);
-  animation: rise 0.18s ease-out;
+  animation: rise var(--fast) var(--ease-out);
+}
+.toast--leaving {
+  animation: fade-out 200ms var(--ease-out) forwards;
 }
 
 /* ---------- narrow screens: map on top, panels stacked below ---------- */
@@ -1521,11 +1550,68 @@ tr[data-out] .minibar i {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+  /* Fewer and gentler, not none: fades and colour changes stay (they explain state),
+     travel, scaling and endless loops go. */
+  @keyframes rise {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes menu-in-up {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes note-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes pin-drop {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes sink {
+    to {
+      opacity: 0;
+    }
+  }
+  .pin::after,
+  .live,
+  .shimmer,
+  .spinner {
+    animation: none !important;
+  }
+  .pin,
+  .pin:hover,
+  .pin--hot,
+  .pin--focus,
+  .pin:active,
+  .tour__hole,
+  .tour__dots li {
+    transform: none;
+    transition-property: background-color, box-shadow, opacity;
+  }
+  .bar i {
+    transition: none;
+  }
+  .btn:active:not(:disabled),
+  .iconbtn:active,
+  .profile:active,
+  .metrocard:active,
+  .filecard:active,
+  .segmented button:active,
+  .weight__step:active {
+    transform: none;
+  }
+  html {
+    scroll-behavior: auto;
   }
 }
 
@@ -1742,10 +1828,10 @@ tr[data-out] .minibar i {
 }
 .tour__hole {
   transition:
-    x 0.45s cubic-bezier(0.3, 0.7, 0.2, 1),
-    y 0.45s cubic-bezier(0.3, 0.7, 0.2, 1),
-    width 0.45s cubic-bezier(0.3, 0.7, 0.2, 1),
-    height 0.45s cubic-bezier(0.3, 0.7, 0.2, 1);
+    x 420ms var(--ease-in-out),
+    y 420ms var(--ease-in-out),
+    width 420ms var(--ease-in-out),
+    height 420ms var(--ease-in-out);
 }
 @keyframes fade-in {
   from {
@@ -1762,7 +1848,7 @@ tr[data-out] .minibar i {
   stroke-linejoin: round;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation: draw var(--dur, 0.55s) cubic-bezier(0.45, 0.05, 0.3, 1) forwards;
+  animation: draw var(--dur, 0.55s) var(--ease-pen) forwards;
   animation-delay: var(--at, 0s);
 }
 .sketch--loop {
@@ -1802,7 +1888,7 @@ tr[data-out] .minibar i {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.5) inset,
     0 18px 40px -16px rgba(5, 6, 8, 0.45);
-  animation: note-in 0.35s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+  animation: note-in 320ms var(--ease-out) both;
 }
 /* a strip of masking tape holding the note down */
 .tour__note::before {
@@ -1930,7 +2016,7 @@ tr[data-out] .minibar i {
 }
 .select__chev {
   color: var(--muted);
-  transition: transform 0.18s;
+  transition: transform var(--fast) var(--ease-out);
 }
 .select[aria-expanded="true"] .select__chev {
   transform: rotate(180deg);
@@ -1961,7 +2047,7 @@ tr[data-out] .minibar i {
   box-shadow: var(--shadow-lg);
   outline: none;
   transform-origin: top left;
-  animation: menu-in 0.14s cubic-bezier(0.2, 0.9, 0.3, 1);
+  animation: menu-in 160ms var(--ease-out);
 }
 .menu--up {
   transform-origin: bottom left;
@@ -2034,10 +2120,20 @@ tr[data-out] .minibar i {
   pointer-events: none;
   transform: translate(-50%, -100%);
   box-shadow: 0 8px 22px -8px rgba(0, 0, 0, 0.45);
-  animation: tip-in 0.12s ease-out;
+  animation: tip-in 140ms var(--ease-out);
 }
 .tooltip--below {
   transform: translate(-50%, 0);
+}
+.tooltip--warm {
+  animation: none;
+}
+.tooltip kbd {
+  margin-left: 8px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--on-solid) 16%, transparent);
+  font: 500 11px var(--mono);
 }
 .tooltip::after {
   content: "";
@@ -2181,7 +2277,7 @@ dt[data-tip] {
   border-radius: 12px;
   border: 1px solid color-mix(in srgb, var(--blue) 35%, transparent);
   background: var(--blue-wash);
-  animation: rise 0.2s ease-out;
+  animation: rise var(--base) var(--ease-out);
 }
 .proposal--unsupported {
   border-color: var(--warn-border);
@@ -2318,7 +2414,7 @@ dt[data-tip] {
   border: 1px solid var(--line);
   border-radius: 11px;
   background: var(--paper-2);
-  animation: rise 0.25s ease-out both;
+  animation: rise var(--base) var(--ease-out) both;
 }
 .angle:nth-child(2) {
   animation-delay: 0.06s;
@@ -2729,7 +2825,6 @@ dt[data-tip] {
   padding-top: 12vh;
   background: rgba(5, 6, 8, 0.28);
   backdrop-filter: blur(2px);
-  animation: fade-in 0.12s ease-out;
 }
 .palette {
   width: min(560px, calc(100vw - 24px));
@@ -2738,7 +2833,6 @@ dt[data-tip] {
   border: 1px solid var(--line);
   border-radius: 16px;
   box-shadow: var(--shadow-lg);
-  animation: rise 0.16s ease-out;
 }
 .palette__input {
   width: 100%;
