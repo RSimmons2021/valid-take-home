@@ -5,6 +5,7 @@ import type { Weight, Weights } from "../model/factors";
 import { type Plan, planPins } from "../model/plan";
 import { DEFAULT_PROFILE, profileById } from "../model/profiles";
 import { type ScoreResult, scoreCells } from "../model/score";
+import { type Stacks, describeChange, record, snapshot } from "./history";
 import { type PlanState, decode, encode } from "./url";
 
 export type Dialog = "export" | "data" | "welcome" | "results" | null;
@@ -26,6 +27,8 @@ interface Store extends PlanState {
   view3d: boolean;
   /** current step of the guided tour, or null when it isn't showing */
   tour: number | null;
+  /** undo/redo stacks of plan snapshots */
+  history: Stacks;
   /** lift-test ZIPs drawn on the map, or null */
   liftOverlay: { test: string[]; control: string[] } | null;
 
@@ -47,6 +50,9 @@ interface Store extends PlanState {
   setView3d(on: boolean): void;
   startTour(): void;
   setLiftOverlay(o: { test: string[]; control: string[] } | null): void;
+  /** returns what was undone/redone ("weights", "radius"…), or null if there was nothing */
+  undo(): Promise<string | null>;
+  redo(): Promise<string | null>;
   setTourStep(step: number): void;
   endTour(): void;
 }
@@ -92,8 +98,12 @@ const DEFAULTS: PlanState = {
 
 export const useStore = create<Store>((set, get) => {
   /** Rescore and replan from the current inputs. Both are pure and fast (≤ 60 ms on 12k cells). */
+  let restoring = false;
   const recompute = (patch: Partial<Store> = {}) => {
-    const s = { ...get(), ...patch };
+    const before = get();
+    const s = { ...before, ...patch };
+    // Every plan change is an undo step, except the first load and undo/redo themselves.
+    if (before.metro && !restoring) patch = { ...patch, history: record(before.history, before, s, Date.now()) };
     if (!s.metro) {
       set(patch);
       return;
@@ -108,6 +118,17 @@ export const useStore = create<Store>((set, get) => {
     const s = get();
     const hash = encode(s);
     if (location.hash !== hash) history.replaceState(null, "", hash);
+  };
+
+  /** Apply a snapshot without recording it (undo/redo), loading another metro if needed. */
+  const restore = async (snap: PlanState) => {
+    restoring = true;
+    try {
+      if (snap.metroId !== get().metroId) await get().setMetro(snap.metroId);
+      recompute({ profileId: snap.profileId, weights: { ...snap.weights }, minHomes: snap.minHomes, pins: snap.pins, radiusMi: snap.radiusMi, focusedPin: null, selected: null });
+    } finally {
+      restoring = false;
+    }
   };
 
   return {
@@ -126,6 +147,7 @@ export const useStore = create<Store>((set, get) => {
     view3d: false,
     tour: null,
     liftOverlay: null,
+    history: { past: [], future: [], last: null },
 
     async boot() {
       const fromUrl = decode(location.hash);
@@ -216,6 +238,26 @@ export const useStore = create<Store>((set, get) => {
     },
     setView3d(view3d) {
       set({ view3d });
+    },
+    async undo() {
+      const { history: h } = get();
+      const prev = h.past[h.past.length - 1];
+      if (!prev) return null;
+      const now = snapshot(get());
+      const label = describeChange(prev, now);
+      set({ history: { past: h.past.slice(0, -1), future: [...h.future, now], last: null } });
+      await restore(prev);
+      return label;
+    },
+    async redo() {
+      const { history: h } = get();
+      const next = h.future[h.future.length - 1];
+      if (!next) return null;
+      const now = snapshot(get());
+      const label = describeChange(now, next);
+      set({ history: { past: [...h.past, now], future: h.future.slice(0, -1), last: null } });
+      await restore(next);
+      return label;
     },
     setLiftOverlay(liftOverlay) {
       set({ liftOverlay });

@@ -46,6 +46,14 @@ export function TopBar() {
         </span>
       )}
       <nav className="top__actions" aria-label="Plan actions">
+        <button
+          type="button"
+          className="btn btn--ghost top__search"
+          onClick={() => window.dispatchEvent(new Event("catchment:palette"))}
+          data-tip="Every action, metro and pin, by keyboard"
+        >
+          Search <kbd>{/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl"} K</kbd>
+        </button>
         <button type="button" className="btn btn--ghost top__guide" onClick={startTour} disabled={!release} data-tip="Replay the guided tour">
           <span className="top__guide-mark" aria-hidden="true">
             ?

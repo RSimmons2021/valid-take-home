@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapView } from "./map/MapView";
 import { PALETTES, rampCss } from "./map/colors";
 import { useStore } from "./state/store";
@@ -6,6 +6,7 @@ import { useTheme } from "./state/theme";
 import { BusinessPanel } from "./ui/BusinessPanel";
 import { useAi } from "./ai/store";
 import { CellCard } from "./ui/CellCard";
+import { CommandPalette, undoToast } from "./ui/CommandPalette";
 import { Dialogs } from "./ui/Dialogs";
 import { PinCard } from "./ui/PinCard";
 import { PlanPanel } from "./ui/PlanPanel";
@@ -23,6 +24,22 @@ export function App() {
     void useStore.getState().boot();
     void useAi.getState().checkHealth();
     const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing = !!t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+      const mod = e.metaKey || e.ctrlKey;
+      // Undo/redo the plan, unless the user is editing text (where the browser's undo belongs).
+      if (mod && !typing && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        const s = useStore.getState();
+        if (e.shiftKey) void s.redo().then((w) => undoToast(w, "Redid"));
+        else void s.undo().then((w) => undoToast(w, "Undid"));
+        return;
+      }
+      if (mod && !typing && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        void useStore.getState().redo().then((w) => undoToast(w, "Redid"));
+        return;
+      }
       if (e.key === "Escape") {
         const s = useStore.getState();
         if (s.selected != null) s.select(null);
@@ -59,6 +76,8 @@ export function App() {
       {metro && <PlanPanel />}
       <Dialogs />
       <Tour />
+      <CommandPalette />
+      <PlanAnnouncer />
       <TooltipLayer />
       <Toasts />
     </div>
@@ -121,6 +140,33 @@ function Toasts() {
           {t.text}
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Screen readers hear what changed after an edit settles ("Plan updated: 8 pins, 340k homes,
+ * 80% on target"), not every intermediate state. Silent on first load.
+ */
+function PlanAnnouncer() {
+  const plan = useStore((s) => s.plan);
+  const [text, setText] = useState("");
+  const first = useRef(true);
+  useEffect(() => {
+    if (!plan) return;
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    const id = window.setTimeout(() => {
+      const on = plan.homes ? Math.round((plan.onTargetHomes / plan.homes) * 100) : 0;
+      setText(`Plan updated: ${plan.pins.length} pins, ${Math.round(plan.homes).toLocaleString("en-US")} homes, ${on}% on target.`);
+    }, 800);
+    return () => clearTimeout(id);
+  }, [plan]);
+  return (
+    <div className="sr-only" role="status" aria-live="polite">
+      {text}
     </div>
   );
 }

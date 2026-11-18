@@ -1,7 +1,9 @@
 import { MAX_PINS, RADIUS_OPTIONS_MI } from "../model/plan";
 import { pinChanges, releaseLabel } from "../model/changes";
 import { pinName } from "../model/export";
+import { useRef } from "react";
 import { useStore } from "../state/store";
+import { AnimatedNumber, useFlip } from "./motion";
 import { compact, int, pct } from "./format";
 
 export function PlanPanel() {
@@ -14,6 +16,8 @@ export function PlanPanel() {
   const { setPins, setRadius, focusPin, open, requestFrame } = useStore.getState();
 
   const onShare = plan && plan.homes ? plan.onTargetHomes / plan.homes : 0;
+  const listRef = useRef<HTMLOListElement>(null);
+  useFlip(listRef, [plan]);
 
   return (
     <section className="panel panel--right" aria-labelledby="plan-title">
@@ -71,17 +75,23 @@ export function PlanPanel() {
             <dl className="stats">
               <div className="stat stat--lead">
                 <dt data-tip="Addresses inside the pins, with apartment units counted where the county lists them">Homes reached</dt>
-                <dd>{compact(plan.homes)}</dd>
+                <dd>
+                  <AnimatedNumber value={plan.homes} format={compact} />
+                </dd>
               </div>
               <div className="stat">
                 <dt data-tip="Share of reached homes in cells scoring 50 or more. The rest is spill you'd pay for anyway.">On target</dt>
-                <dd>{pct(onShare)}</dd>
+                <dd>
+                  <AnimatedNumber value={onShare} format={(v) => pct(v)} />
+                </dd>
               </div>
               <div className="stat">
                 <dt data-tip={`How many of the ${int(plan.metroOnTargetHomes)} well-matched homes in ${metro.info.name} these pins reach`}>
                   Captured
                 </dt>
-                <dd>{pct(plan.capture)}</dd>
+                <dd>
+                  <AnimatedNumber value={plan.capture} format={(v) => pct(v)} />
+                </dd>
               </div>
             </dl>
             <div className="bar" aria-hidden="true">
@@ -104,12 +114,12 @@ export function PlanPanel() {
                 Fit all
               </button>
             </div>
-            <ol className="pins">
+            <ol className="pins" ref={listRef}>
               {plan.pins.map((p) => {
                 const on = p.homes ? p.onTargetHomes / p.homes : 0;
                 const ch = metro ? pinChanges(metro, p, weights) : null;
                 return (
-                  <li key={p.rank}>
+                  <li key={p.cell} data-flip-key={p.cell}>
                     <button
                       type="button"
                       className="pinrow"
