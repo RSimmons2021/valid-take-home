@@ -44,6 +44,25 @@ test("choosing a business rescores, replans and updates the link", async ({ page
   await expect(page).toHaveTitle(/Pet care in San Francisco & Oakland/);
 });
 
+test("pins stay anchored to the map, and the legend spotlights a kind of block", async ({ page }) => {
+  await openPlan(page);
+  // MapLibre positions each anchor absolutely; if CSS ever overrides that, pins stack in
+  // page flow and drift off their circles (a real bug, found by eye).
+  const anchors = page.locator(".pin-anchor");
+  await expect(anchors).toHaveCount(8);
+  const positions = await anchors.evaluateAll((els) => els.map((el) => getComputedStyle(el).position));
+  expect(new Set(positions)).toEqual(new Set(["absolute"]));
+  // Pins and rows light up together.
+  await page.locator(".pinrow").nth(2).hover();
+  await expect(page.locator(".pin--hot")).toHaveText("3");
+  // A legend click keeps the spotlight on; a second click releases it.
+  const key = page.getByRole("button", { name: /Avoided nearby/ });
+  await key.click();
+  await expect(key).toHaveAttribute("aria-pressed", "true");
+  await key.click();
+  await expect(key).toHaveAttribute("aria-pressed", "false");
+});
+
 test("export offers ZIPs, radius lines and a balanced lift test", async ({ page }) => {
   await openPlan(page);
   await page.getByRole("button", { name: "Export plan" }).click();

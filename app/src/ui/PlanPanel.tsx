@@ -12,8 +12,9 @@ export function PlanPanel() {
   const pins = useStore((s) => s.pins);
   const radiusMi = useStore((s) => s.radiusMi);
   const focusedPin = useStore((s) => s.focusedPin);
+  const hotPin = useStore((s) => s.hotPin);
   const weights = useStore((s) => s.weights);
-  const { setPins, setRadius, focusPin, open, requestFrame } = useStore.getState();
+  const { setPins, setRadius, focusPin, setHotPin, open, requestFrame } = useStore.getState();
 
   const onShare = plan && plan.homes ? plan.onTargetHomes / plan.homes : 0;
   const listRef = useRef<HTMLOListElement>(null);
@@ -122,9 +123,13 @@ export function PlanPanel() {
                   <li key={p.cell} data-flip-key={p.cell}>
                     <button
                       type="button"
-                      className="pinrow"
+                      className={`pinrow${hotPin === p.rank ? " pinrow--hot" : ""}`}
                       aria-pressed={focusedPin === p.rank}
                       onClick={() => focusPin(focusedPin === p.rank ? null : p.rank)}
+                      onPointerEnter={() => setHotPin(p.rank)}
+                      onPointerLeave={() => setHotPin(null)}
+                      onFocus={() => setHotPin(p.rank)}
+                      onBlur={() => setHotPin(null)}
                     >
                       <span className="pinrow__rank">{p.rank}</span>
                       <span className="pinrow__main">

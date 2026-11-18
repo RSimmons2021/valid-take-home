@@ -54,6 +54,8 @@ function ramp(from: RGB, to: RGB, alpha: [number, number]): RGBA[] {
 
 export interface ScorePalette {
   low: RGBA;
+  /** below average *because* of a signal the user avoids: a warm wash, never darker than fit */
+  held: RGBA;
   ramp: RGBA[];
   /** evidence links: a preferred signal, an avoided one */
   prefer: RGBA;
@@ -61,6 +63,8 @@ export interface ScorePalette {
   /** pin radius outline */
   ring: RGBA;
   ringFill: RGBA;
+  /** a pin's reach when it's focused, hovered or spotlit from the legend */
+  ringFillHot: RGBA;
   /** 3D: side walls are darker than tops */
   selected: RGBA;
 }
@@ -68,31 +72,40 @@ export interface ScorePalette {
 export const PALETTES: Record<Theme, ScorePalette> = {
   light: {
     low: [138, 128, 112, 26],
+    held: [240, 96, 72, 62],
     ramp: ramp([205, 210, 255], [22, 38, 255], [120, 225]),
     prefer: [22, 38, 255, 230],
     avoid: [255, 59, 47, 230],
     ring: [5, 6, 8, 210],
     ringFill: [0, 225, 240, 14],
+    ringFillHot: [0, 225, 240, 44],
     selected: [5, 6, 8, 255],
   },
   dark: {
     low: [236, 235, 230, 14],
+    held: [255, 122, 102, 80],
     ramp: ramp([196, 204, 255], [38, 56, 255], [55, 240]),
     prefer: [0, 225, 240, 235],
     avoid: [255, 95, 80, 235],
     ring: [236, 235, 230, 190],
     ringFill: [0, 225, 240, 18],
+    ringFillHot: [0, 225, 240, 40],
     selected: [255, 255, 255, 255],
   },
 };
 
 const NONE: RGBA = [0, 0, 0, 0];
 
-export function scoreColor(score: number, palette: ScorePalette): RGBA {
+/** Map classes a reader can pick out at a glance, and that the legend can spotlight. */
+export type CellClass = "fit" | "low" | "held" | "reach";
+
+export function scoreColor(score: number, palette: ScorePalette, held = false): RGBA {
   if (Number.isNaN(score)) return NONE;
-  if (score < 50) return palette.low;
+  if (score < 50) return held ? palette.held : palette.low;
   return palette.ramp[Math.min(50, Math.max(0, Math.round(score - 50)))];
 }
+
+export const css = ([r, g, b, a]: RGBA) => `rgba(${r},${g},${b},${(a / 255).toFixed(2)})`;
 
 export function rampCss(palette: ScorePalette): string {
   const stops = [0, 0.25, 0.5, 0.75, 1].map((t) => {

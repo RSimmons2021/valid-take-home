@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MapView } from "./map/MapView";
-import { PALETTES, rampCss } from "./map/colors";
+import { type CellClass, PALETTES, css, rampCss } from "./map/colors";
 import { useStore } from "./state/store";
 import { useTheme } from "./state/theme";
 import { BusinessPanel } from "./ui/BusinessPanel";
@@ -98,18 +98,53 @@ function Legend() {
   const theme = useTheme((s) => s.theme);
   const liftOverlay = useStore((s) => s.liftOverlay);
   const setLiftOverlay = useStore((s) => s.setLiftOverlay);
+  const weights = useStore((s) => s.weights);
+  const setPeek = useStore((s) => s.setPeek);
   const lowUnits = metro.ledger.addresses.units_per_rooftop < 1.2;
+  const avoids = Object.values(weights).some((w) => (w ?? 0) < 0);
+  const palette = PALETTES[theme];
+  // Hover (or focus) peeks at one kind of block; a click keeps the spotlight on.
+  const [hover, setHover] = useState<CellClass | null>(null);
+  const [kept, setKept] = useState<CellClass | null>(null);
+  useEffect(() => setPeek(hover ?? kept), [hover, kept, setPeek]);
+  useEffect(() => () => setPeek(null), [setPeek]);
+  useEffect(() => {
+    if (kept === "held" && !avoids) setKept(null);
+  }, [avoids, kept]);
+  const peekable = (c: CellClass) => ({
+    "aria-pressed": kept === c,
+    onPointerEnter: () => setHover(c),
+    onPointerLeave: () => setHover(null),
+    onFocus: () => setHover(c),
+    onBlur: () => setHover(null),
+    onClick: () => setKept((k) => (k === c ? null : c)),
+  });
   return (
     <div className="legend">
-      <span className="legend__item" data-tip="Blocks below the city median for your customer. Pins ignore them.">
-        <i className="legend__low" aria-hidden="true" /> Below average
-      </span>
-      <span className="legend__ramp" data-tip="Darker blue means a better fit for your customer">
-        <span>Good fit</span>
-        <i style={{ background: rampCss(PALETTES[theme]) }} aria-hidden="true" />
+      <button type="button" className="legend__item legend__key" data-tip="Blocks below the city median for your customer. Pins ignore them. Click to spotlight." {...peekable("low")}>
+        <i className="legend__chip" style={{ background: css(palette.low), boxShadow: "inset 0 0 0 1px var(--line)" }} aria-hidden="true" /> Below average
+      </button>
+      {avoids && (
+        <button
+          type="button"
+          className="legend__item legend__key"
+          data-tip="Below average mainly because of something you chose to avoid nearby. Hover a block to see what. Click to spotlight."
+          {...peekable("held")}
+        >
+          <i className="legend__chip" style={{ background: css([palette.held[0], palette.held[1], palette.held[2], Math.min(255, palette.held[3] * 2.4)]) }} aria-hidden="true" /> Avoided nearby
+        </button>
+      )}
+      <button type="button" className="legend__ramp legend__key" data-tip="Darker blue means a better fit for your customer. Click to spotlight." {...peekable("fit")}>
+        <span>Good</span>
+        <i style={{ background: rampCss(palette) }} aria-hidden="true" />
         <span>Best fit</span>
+      </button>
+      <button type="button" className="legend__item legend__key" data-tip="What your pins reach. Click to spotlight." {...peekable("reach")}>
+        <i className="legend__ring" aria-hidden="true" /> Pin reach
+      </button>
+      <span className="legend__item legend__muted" data-tip={`Blocks with fewer than ${minHomes} homes aren't scored. Raise or lower this floor in the Business panel.`} tabIndex={0}>
+        Blank: &lt;{minHomes} homes
       </span>
-      <span className="legend__item legend__muted" data-tip="Raise or lower this floor in the Business panel">Unshaded: under {minHomes} homes</span>
       {lowUnits && (
         <button type="button" className="legend__warn" onClick={() => open("data")}>
           Apartment units not listed here ⓘ

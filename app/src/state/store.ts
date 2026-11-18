@@ -7,6 +7,7 @@ import { DEFAULT_PROFILE, profileById } from "../model/profiles";
 import { type ScoreResult, scoreCells } from "../model/score";
 import { type Stacks, describeChange, record, snapshot } from "./history";
 import { type PlanState, decode, encode } from "./url";
+import type { CellClass } from "../map/colors";
 
 export type Dialog = "export" | "data" | "welcome" | "results" | null;
 
@@ -31,6 +32,10 @@ interface Store extends PlanState {
   history: Stacks;
   /** lift-test ZIPs drawn on the map, or null */
   liftOverlay: { test: string[]; control: string[] } | null;
+  /** pin rank highlighted together on the map and in the list (hover), not a plan input */
+  hotPin: number | null;
+  /** legend item being hovered: the map spotlights that class of cell */
+  peek: CellClass | null;
 
   boot(): Promise<void>;
   setMetro(id: string): Promise<void>;
@@ -45,6 +50,8 @@ interface Store extends PlanState {
   hover(cell: number | null): void;
   select(cell: number | null): void;
   focusPin(rank: number | null): void;
+  setHotPin(rank: number | null): void;
+  setPeek(c: CellClass | null): void;
   open(d: Dialog): void;
   requestFrame(): void;
   setView3d(on: boolean): void;
@@ -140,6 +147,8 @@ export const useStore = create<Store>((set, get) => {
     result: null,
     plan: null,
     hovered: null,
+    hotPin: null,
+    peek: null,
     selected: null,
     focusedPin: null,
     dialog: null,
@@ -174,7 +183,7 @@ export const useStore = create<Store>((set, get) => {
 
     async setMetro(id) {
       const summary = get().index?.metros.find((m) => m.id === id);
-      set({ loading: summary?.name ?? id, error: null, selected: null, hovered: null, focusedPin: null, liftOverlay: null });
+      set({ loading: summary?.name ?? id, error: null, selected: null, hovered: null, focusedPin: null, hotPin: null, liftOverlay: null });
       try {
         let metro = cache.get(id);
         if (!metro) {
@@ -224,6 +233,12 @@ export const useStore = create<Store>((set, get) => {
     },
     focusPin(focusedPin) {
       set({ focusedPin, selected: null });
+    },
+    setHotPin(hotPin) {
+      if (get().hotPin !== hotPin) set({ hotPin });
+    },
+    setPeek(peek) {
+      if (get().peek !== peek) set({ peek });
     },
     open(dialog) {
       const closingWelcome = get().dialog === "welcome" && dialog !== "welcome";

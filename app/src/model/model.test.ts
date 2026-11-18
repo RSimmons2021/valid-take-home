@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { googleRadiusLines, pinsCsv, plannedZips, toCsv } from "./export";
 import { ON_TARGET, cellValue, planPins } from "./plan";
-import { explain, percentileRanks, scoreCells, verdict } from "./score";
+import { explain, heldBack, percentileRanks, scoreCells, verdict } from "./score";
 import { fakeMetro } from "./testkit";
 
 describe("percentileRanks", () => {
@@ -48,6 +48,26 @@ describe("scoreCells", () => {
     expect(why).toHaveLength(2);
     expect(why[0].factor.id).toBe("pet_life"); // weight 2 dominates
     expect(why.every((c) => c.push >= 0)).toBe(true);
+  });
+
+  it("marks low cells held back by an avoided signal, and only those", () => {
+    // Homes rise with the index; vets sit in odd cells (and their rings). Avoiding vets pushes those down.
+    const m = fakeMetro({ homes: (i) => 50 + i, vets: (i) => (i % 2 ? 3 : 0) });
+    const r = scoreCells(m, { weights: { homes: 1, pet_life: -2 }, minHomes: 0 });
+    const held = heldBack(r);
+    const avoidK = r.active.findIndex((a) => a.factor.id === "pet_life");
+    let tagged = 0;
+    for (let i = 0; i < m.n; i++) {
+      if (held[i] === -1) continue;
+      tagged++;
+      expect(held[i]).toBe(avoidK);
+      expect(r.score[i]).toBeLessThan(50);
+      expect(r.pct.get("pet_life")![i]).toBeGreaterThanOrEqual(0.6); // clearly high on what's avoided
+    }
+    expect(tagged).toBeGreaterThan(0);
+    // With nothing avoided, nothing is held back.
+    const plain = scoreCells(m, { weights: { homes: 1, pet_life: 2 }, minHomes: 0 });
+    expect(heldBack(plain).every((k) => k === -1)).toBe(true);
   });
 
   it("maps scores to verdicts", () => {

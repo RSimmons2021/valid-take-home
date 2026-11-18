@@ -8,11 +8,11 @@ import { useEffect, useMemo, useRef } from "react";
 import { type Metro, cellLabel, placesNear } from "../data/metro";
 import { MILE } from "../model/plan";
 import type { ScoreResult } from "../model/score";
-import { verdict } from "../model/score";
+import { heldBack, verdict } from "../model/score";
 import { useStore } from "../state/store";
 import { useTheme } from "../state/theme";
 import { applyBasemapTheme, basemapStyle } from "./basemap";
-import { PALETTES, scoreColor } from "./colors";
+import { type CellClass, PALETTES, type RGBA, scoreColor } from "./colors";
 import { registerMap } from "./snapshot";
 
 let protocolAdded = false;
@@ -62,8 +62,9 @@ export function MapView() {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
-  const markers = useRef<Marker[]>([]);
-  const lastPinCells = useRef<Set<number>>(new Set());
+  /** live markers keyed by cell, so a replan updates pins in place instead of rebuilding them */
+  const markers = useRef(new Map<number, { marker: Marker; el: HTMLButtonElement }>());
+  const lastPeek = useRef<CellClass | null>(null);
   const introPlayed = useRef(false);
   const tooltip = useRef<HTMLDivElement>(null);
 
@@ -76,6 +77,8 @@ export function MapView() {
   const frameRequest = useStore((s) => s.frameRequest);
   const view3d = useStore((s) => s.view3d);
   const liftOverlay = useStore((s) => s.liftOverlay);
+  const hotPin = useStore((s) => s.hotPin);
+  const peek = useStore((s) => s.peek);
   const theme = useTheme((s) => s.theme);
   const palette = PALETTES[theme];
 
@@ -142,6 +145,8 @@ export function MapView() {
     }
     return out;
   }, [metro, liftOverlay]);
+  // Below-average cells that are low *because* of something the user avoids.
+  const held = useMemo(() => (result ? heldBack(result) : null), [result]);
   const evidence = useMemo(
     () => (metro && result && focusCell != null ? evidenceFor(metro, result, focusCell) : []),
     [metro, result, focusCell],
@@ -155,6 +160,16 @@ export function MapView() {
     for (const p of plan?.pins ?? []) for (const i of p.covered) covered[i] = p.rank;
     const focus = focusedPin;
     const motion = reducedMotion() ? 0 : 1;
+    // A legend spotlight is a quick peek, so it fades fast; a rescore morphs more slowly.
+    const peekChanged = lastPeek.current !== peek;
+    lastPeek.current = peek;
+    const classOf = (i: number): CellClass | null => {
+      const sc = result.score[i];
+      if (Number.isNaN(sc)) return null;
+      if (sc >= 50) return "fit";
+      return held && held[i] >= 0 ? "held" : "low";
+    };
+    const dim = (c: RGBA, f: number): RGBA => [c[0], c[1], c[2], Math.round(c[3] * f)];
 
     overlay.setProps({
       layers: [
@@ -163,8 +178,15 @@ export function MapView() {
           data,
           getHexagon: (i) => ids[i],
           getFillColor: (i) => {
-            const c = scoreColor(result.score[i], palette);
-            if (focus != null && covered[i] !== focus) return [c[0], c[1], c[2], Math.round(c[3] * 0.3)];
+            const cls = classOf(i);
+            const c = scoreColor(result.score[i], palette, cls === "held");
+            if (peek) {
+              const match = peek === "reach" ? covered[i] > 0 : cls === peek;
+              if (!match) return dim(c, 0.15);
+              // spotlit pale classes lift a little so they read against the dimmed rest
+              return cls === "fit" ? c : dim(c, 2.2);
+            }
+            if (focus != null && covered[i] !== focus) return dim(c, 0.3);
             return c;
           },
           extruded: view3d,
@@ -176,8 +198,8 @@ export function MapView() {
           autoHighlight: true,
           highlightColor: theme === "dark" ? [255, 255, 255, 50] : [5, 6, 8, 40],
           // Colours morph when a weight changes instead of snapping: the map "thinks".
-          transitions: { getFillColor: 450 * motion, getElevation: 700 * motion },
-          updateTriggers: { getFillColor: [result, focus, plan, theme], getElevation: [result] },
+          transitions: { getFillColor: (peekChanged ? 160 : 450) * motion, getElevation: 700 * motion },
+          updateTriggers: { getFillColor: [result, focus, plan, theme, peek, held], getElevation: [result] },
           ...UNDER_BUILDINGS,
           onHover: (info) => {
             useStore.getState().hover(info.object ?? null);
@@ -202,13 +224,12 @@ export function MapView() {
           radiusUnits: "meters",
           stroked: true,
           filled: true,
-          getFillColor: (p) => (focus === p.rank ? [0, 225, 240, 40] : palette.ringFill),
-          getLineColor: (p) =>
-            focus == null || focus === p.rank ? palette.ring : [palette.ring[0], palette.ring[1], palette.ring[2], 60],
-          getLineWidth: (p) => (focus === p.rank ? 2.5 : 1.25),
+          getFillColor: (p) => (focus === p.rank || hotPin === p.rank || peek === "reach" ? palette.ringFillHot : palette.ringFill),
+          getLineColor: (p) => (focus == null || focus === p.rank ? palette.ring : dim(palette.ring, 0.3)),
+          getLineWidth: (p) => (focus === p.rank || hotPin === p.rank ? 2.5 : 1.25),
           lineWidthUnits: "pixels",
-          transitions: { getRadius: 500 * motion },
-          updateTriggers: { getFillColor: [focus, theme], getLineColor: [focus, theme], getLineWidth: [focus] },
+          transitions: { getRadius: 320 * motion, getLineWidth: 120 * motion, getFillColor: 120 * motion },
+          updateTriggers: { getFillColor: [focus, hotPin, peek, theme], getLineColor: [focus, theme], getLineWidth: [focus, hotPin] },
           ...UNDER_BUILDINGS,
         }),
         new H3HexagonLayer<{ i: number; role: number }>({
@@ -264,33 +285,78 @@ export function MapView() {
         }),
       ],
     });
-  }, [metro, result, plan, selected, focusedPin, data, ids, evidence, view3d, theme, palette, liftCells]);
+  }, [metro, result, plan, selected, focusedPin, hotPin, peek, held, data, ids, evidence, view3d, theme, palette, liftCells]);
 
-  // Pin markers (HTML, so the numbers use the interface type). Only pins that are new to
-  // the plan drop in, so tuning a weight doesn't replay the animation on every pin.
+  // Pin markers (HTML, so the numbers use the interface type). MapLibre owns the outer
+  // anchor's transform (that's the pin's position on the map); every animation lives on the
+  // inner button, so motion never fights the map and pins can't drift from their circles.
+  // Markers are keyed by cell: a replan updates them in place, only new pins drop in, and
+  // pins that leave the plan shrink out instead of vanishing.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    for (const m of markers.current) m.remove();
-    const before = lastPinCells.current;
+    const pins = plan?.pins ?? [];
+    const keep = new Set(pins.map((p) => p.cell));
+    const motion = !reducedMotion();
+    for (const [cell, m] of markers.current) {
+      if (keep.has(cell)) continue;
+      markers.current.delete(cell);
+      if (!motion) {
+        m.marker.remove();
+        continue;
+      }
+      m.el.classList.remove("pin--new", "pin--focus", "pin--hot");
+      m.el.classList.add("pin--leaving");
+      m.el.tabIndex = -1;
+      window.setTimeout(() => m.marker.remove(), 180);
+    }
     let stagger = 0;
-    markers.current = (plan?.pins ?? []).map((p) => {
-      const el = document.createElement("button");
-      el.type = "button";
-      const isNew = !before.has(p.cell);
-      el.className = `pin${focusedPin === p.rank ? " pin--focus" : ""}${isNew ? " pin--new" : ""}`;
-      if (isNew) el.style.setProperty("--delay", `${stagger++ * 70}ms`);
-      el.textContent = String(p.rank);
+    for (const p of pins) {
+      let m = markers.current.get(p.cell);
+      if (!m) {
+        const anchor = document.createElement("div");
+        anchor.className = "pin-anchor";
+        const el = document.createElement("button");
+        el.type = "button";
+        el.className = "pin pin--new";
+        el.style.setProperty("--delay", `${stagger++ * 45}ms`);
+        el.addEventListener("animationend", (e) => {
+          if (e.animationName === "pin-drop") el.classList.remove("pin--new");
+        });
+        el.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          const s = useStore.getState();
+          const rank = Number(el.dataset.rank);
+          s.focusPin(s.focusedPin === rank ? null : rank);
+        });
+        el.addEventListener("pointerenter", () => useStore.getState().setHotPin(Number(el.dataset.rank)));
+        el.addEventListener("pointerleave", () => useStore.getState().setHotPin(null));
+        anchor.appendChild(el);
+        const marker = new Marker({ element: anchor }).setLngLat([p.lon, p.lat]).addTo(map);
+        // MapLibre makes the anchor a "Map marker" button; the pin inside is the real control,
+        // and a button inside a button is invisible to some screen readers.
+        for (const attr of ["role", "aria-label", "tabindex"]) anchor.removeAttribute(attr);
+        m = { marker, el };
+        markers.current.set(p.cell, m);
+      }
+      const { el, marker } = m;
+      const focused = focusedPin === p.rank;
+      if (el.dataset.rank !== String(p.rank)) {
+        el.dataset.rank = String(p.rank);
+        el.textContent = String(p.rank);
+      }
       el.setAttribute("aria-label", `Pin ${p.rank}: ${p.label.hood ?? p.label.city ?? "unnamed area"}`);
-      el.addEventListener("click", (ev) => {
-        ev.stopPropagation();
-        const s = useStore.getState();
-        s.focusPin(s.focusedPin === p.rank ? null : p.rank);
-      });
-      return new Marker({ element: el }).setLngLat([p.lon, p.lat]).addTo(map);
-    });
-    lastPinCells.current = new Set((plan?.pins ?? []).map((p) => p.cell));
+      el.setAttribute("aria-pressed", String(focused));
+      el.classList.toggle("pin--focus", focused);
+      // the focused pin sits above its neighbours where circles overlap
+      marker.getElement().style.zIndex = focused ? "2" : "";
+    }
   }, [plan, focusedPin]);
+
+  // Hovering a pin row lights its marker (and the reverse lights the row), one shared state.
+  useEffect(() => {
+    for (const { el } of markers.current.values()) el.classList.toggle("pin--hot", hotPin != null && el.dataset.rank === String(hotPin));
+  }, [hotPin, plan]);
 
   // Camera: frame the plan (or the metro) on request. The first time, open with
   // Radar's establishing shot: pitched low over the clay city, swinging round and
@@ -376,7 +442,14 @@ export function MapView() {
     else map.once("load", go);
   }, [view3d]);
 
-  const hoverInfo = metro && result && hovered != null ? { label: cellLabel(metro, hovered), score: result.score[hovered] } : null;
+  const hoverInfo =
+    metro && result && hovered != null
+      ? {
+          label: cellLabel(metro, hovered),
+          score: result.score[hovered],
+          heldBy: held && held[hovered] >= 0 ? result.active[held[hovered]].factor.label : null,
+        }
+      : null;
 
   return (
     <div className="map">
@@ -388,6 +461,7 @@ export function MapView() {
             <span>
               {Number.isNaN(hoverInfo.score) ? "Too few homes to score" : `${Math.round(hoverInfo.score)} · ${verdict(hoverInfo.score)}`}
             </span>
+            {hoverInfo.heldBy && <span className="map__tooltip-held">Held back by {hoverInfo.heldBy.toLowerCase()}</span>}
           </>
         )}
       </div>

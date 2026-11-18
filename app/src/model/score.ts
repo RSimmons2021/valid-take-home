@@ -118,3 +118,34 @@ export function verdict(score: number): Verdict {
   if (score >= 40) return "Mixed";
   return "Weak fit";
 }
+
+/**
+ * For each below-average cell, the avoided factor that holds it back, as an index into
+ * `result.active`, or -1. A cell counts only when an avoided signal is the single biggest
+ * drag on its score and the cell sits clearly high on that signal (push ≤ -0.2 × weight
+ * scale), so the map can say "this is low *because* of what you avoid", not just "low".
+ */
+export function heldBack(result: ScoreResult): Int16Array {
+  const n = result.score.length;
+  const out = new Int16Array(n).fill(-1);
+  const avoided = result.active.map((a, k) => ({ ...a, k })).filter((a) => a.weight < 0);
+  if (avoided.length === 0) return out;
+  const pcts = result.active.map((a) => result.pct.get(a.factor.id)!);
+  for (let i = 0; i < n; i++) {
+    const s = result.score[i];
+    if (Number.isNaN(s) || s >= 50) continue;
+    let worst = 0;
+    let worstK = -1;
+    for (let k = 0; k < result.active.length; k++) {
+      const p = pcts[k][i];
+      if (Number.isNaN(p)) continue;
+      const push = result.active[k].weight * (p - 0.5);
+      if (push < worst) {
+        worst = push;
+        worstK = k;
+      }
+    }
+    if (worstK >= 0 && result.active[worstK].weight < 0 && worst <= -0.2 * Math.abs(result.active[worstK].weight)) out[i] = worstK;
+  }
+  return out;
+}

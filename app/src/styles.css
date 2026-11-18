@@ -34,10 +34,20 @@
   --warn-border: rgba(255, 184, 31, 0.45);
   --warn-ink: #6b4a00;
   --danger-ink: #8a2a00;
+  --held-ink: #ff8f80;
   --shadow-lg: 0 30px 80px -20px rgba(5, 6, 8, 0.45);
   --glow: 0 0 0 1px rgba(22, 38, 255, 0.25), 0 0 24px -4px rgba(22, 38, 255, 0.45);
   --top: 56px;
   --gap: 12px;
+  /* Motion. One vocabulary for the whole app: ease-out for things entering or responding,
+     ease-in-out for things moving on screen, a light overshoot only for pins landing. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-land: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-pen: cubic-bezier(0.45, 0.05, 0.3, 1);
+  --press: 140ms;
+  --fast: 180ms;
+  --base: 240ms;
   color-scheme: light;
   font-family: var(--sans);
   color: var(--ink);
@@ -72,6 +82,7 @@
     --warn-border: rgba(255, 184, 31, 0.35);
     --warn-ink: #ffcf66;
     --danger-ink: #ff8a80;
+    --held-ink: #b02a1a;
     --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 16px 40px -14px rgba(0, 0, 0, 0.7);
     --shadow-lg: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
     --glow: 0 0 0 1px rgba(0, 225, 240, 0.25), 0 0 26px -4px rgba(0, 225, 240, 0.5);
@@ -102,6 +113,7 @@
   --warn-border: rgba(255, 184, 31, 0.35);
   --warn-ink: #ffcf66;
   --danger-ink: #ff8a80;
+  --held-ink: #b02a1a;
   --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 16px 40px -14px rgba(0, 0, 0, 0.7);
   --shadow-lg: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
   --glow: 0 0 0 1px rgba(0, 225, 240, 0.25), 0 0 26px -4px rgba(0, 225, 240, 0.5);
@@ -350,7 +362,16 @@ p {
 .maplibregl-ctrl-attrib {
   font-size: 10px;
 }
+.map__tooltip .map__tooltip-held {
+  color: var(--held-ink);
+}
+.pin-anchor {
+  /* MapLibre positions this box (absolute + transform). Never style its transform. */
+  width: 24px;
+  height: 24px;
+}
 .pin {
+  position: relative;
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -359,17 +380,40 @@ p {
   background: var(--solid);
   color: var(--on-solid);
   font: 600 11px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
   box-shadow:
     0 0 0 2px var(--card),
     0 4px 10px rgba(0, 0, 0, 0.35);
-  transition: transform 0.15s;
+  cursor: pointer;
+  transition:
+    transform var(--fast) var(--ease-out),
+    background-color var(--fast) var(--ease-out),
+    box-shadow var(--fast) var(--ease-out);
 }
-.pin:hover {
+@media (hover: hover) and (pointer: fine) {
+  .pin:hover {
+    transform: scale(1.12);
+  }
+}
+.pin--hot {
   transform: scale(1.12);
+  background: var(--blue);
+}
+.pin:active {
+  transform: scale(0.94);
+  transition-duration: var(--press);
 }
 .pin--focus {
   background: var(--blue);
   transform: scale(1.18);
+  box-shadow:
+    0 0 0 2px var(--card),
+    0 0 0 5px color-mix(in srgb, var(--cyan) 55%, transparent),
+    0 4px 10px rgba(0, 0, 0, 0.35);
+}
+.pin:focus-visible {
+  outline: 2px solid var(--blue-text);
+  outline-offset: 4px;
 }
 .boot {
   position: absolute;
@@ -703,13 +747,22 @@ p {
   text-align: left;
   transition: background-color 0.12s;
 }
-.pinrow:hover {
+.pinrow:hover,
+.pinrow--hot {
   background: var(--hover);
+}
+.pinrow:active {
+  background: var(--blue-wash);
+}
+.pinrow--hot .pinrow__rank {
+  background: var(--blue);
+  color: #fff;
 }
 .pinrow[aria-pressed="true"] {
   background: var(--blue-wash);
 }
 .pinrow__rank {
+  transition: background-color var(--fast) var(--ease-out);
   width: 22px;
   height: 22px;
   border-radius: 50%;
@@ -754,7 +807,7 @@ p {
   z-index: 5;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   padding: 8px 12px;
   border-radius: 10px;
   background: var(--glass);
@@ -769,11 +822,36 @@ p {
   align-items: center;
   gap: 6px;
 }
-.legend__low {
+.legend__chip {
   width: 14px;
   height: 10px;
   border-radius: 3px;
-  background: var(--low);
+}
+.legend__ring {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.25px solid var(--ink-2);
+  background: color-mix(in srgb, var(--cyan) 22%, transparent);
+}
+/* Legend entries are keys: hover peeks at that kind of block on the map, click keeps it. */
+.legend__key {
+  margin: -4px -6px;
+  padding: 4px 6px;
+  border-radius: 7px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color var(--fast) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .legend__key:hover {
+    background: var(--hover);
+  }
+}
+.legend__key[aria-pressed="true"] {
+  background: var(--blue-wash);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--blue) 35%, transparent);
 }
 .legend__ramp {
   display: inline-flex;
@@ -781,7 +859,7 @@ p {
   gap: 6px;
 }
 .legend__ramp i {
-  width: 90px;
+  width: 64px;
   height: 10px;
   border-radius: 3px;
 }
@@ -1507,10 +1585,8 @@ tr[data-out] .minibar i {
   padding: 0 9px;
 }
 
-/* Pins drop in, staggered, with one pulse ring (Radar's report pulse). The focused pin keeps pulsing. */
-.pin {
-  position: relative;
-}
+/* Pins land, staggered, with one pulse ring (Radar's report pulse). Focusing a pin pulses
+   twice, then holds a steady halo: an endless pulse beside a map you're reading distracts. */
 .pin::after {
   content: "";
   position: absolute;
@@ -1521,20 +1597,30 @@ tr[data-out] .minibar i {
   pointer-events: none;
 }
 .pin--new {
-  animation: pin-drop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  animation: pin-drop 360ms var(--ease-land) both;
   animation-delay: var(--delay, 0ms);
 }
 .pin--new::after {
-  animation: pin-pulse 1.1s ease-out both;
-  animation-delay: calc(var(--delay, 0ms) + 0.25s);
+  animation: pin-pulse 900ms var(--ease-out) both;
+  animation-delay: calc(var(--delay, 0ms) + 200ms);
 }
 .pin--focus::after {
-  animation: pin-pulse 1.6s ease-out infinite;
+  animation: pin-pulse 900ms var(--ease-out) 2;
+}
+.pin--leaving {
+  pointer-events: none;
+  animation: pin-leave 160ms var(--ease-out) forwards;
 }
 @keyframes pin-drop {
   from {
     opacity: 0;
-    transform: translateY(-14px) scale(0.6);
+    transform: translateY(-10px) scale(0.7);
+  }
+}
+@keyframes pin-leave {
+  to {
+    opacity: 0;
+    transform: scale(0.7);
   }
 }
 @keyframes pin-pulse {
@@ -1544,7 +1630,7 @@ tr[data-out] .minibar i {
   }
   100% {
     opacity: 0;
-    transform: scale(2.6);
+    transform: scale(2.4);
   }
 }
 
