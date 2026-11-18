@@ -16,3 +16,4 @@ pipeline/data/
 dist-mcp/
 test-results/
 playwright-report/
+.vercel/

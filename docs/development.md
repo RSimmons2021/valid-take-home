@@ -48,9 +48,11 @@ CI (`.github/workflows/ci.yml`) runs exactly these checks on every push and PR: 
 | --- | --- |
 | Root | `app/` |
 | Build | `npm ci && npm run build` |
-| Start | `npm start` (`node server/main.ts`) |
+| Start | `node --env-file-if-exists=/etc/secrets/catchment.env server/main.ts` |
 | Health check | `/api/health` |
 | Environment | `NODE_VERSION=22.22.0`, `OPENAI_API_KEY` (set it in the dashboard, never in the file), `AI_DAILY_BUDGET_USD=3` |
+
+The live service loads its OpenAI key from the Render secret file `catchment.env`. A Blueprint deployment can supply the same key as an environment variable. The start command accepts either setup.
 
 The server sets cache headers itself: `/assets/*` immutable, `/data/*` for an hour, the page always revalidated. It also gzips text responses.
 
@@ -59,7 +61,7 @@ The server sets cache headers itself: `/assets/*` immutable, `/data/*` for an ho
 `app/vercel.json` builds the static site on Vercel and **rewrites `/api/*` and `/s` to the Render service**, so the browser only ever talks to one origin: no CORS, and the AI key stays on Render.
 
 1. Deploy the Render service from `render.yaml` and set `OPENAI_API_KEY` in its dashboard.
-2. If Render gives the service a URL other than `https://catchment.onrender.com`, change the two `destination`s in `app/vercel.json`.
+2. Point the two `destination`s in `app/vercel.json` at the Render service. The submission uses `https://catchment-c92c.onrender.com`.
 3. Import the repo on Vercel with **Root Directory `app`**. No environment variables are needed there.
 
 Notes:
