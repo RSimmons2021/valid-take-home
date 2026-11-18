@@ -178,6 +178,16 @@ export function PlanPanel() {
         )}
       </div>
       <div className="panel__foot">
+        <button type="button" className="autopilot-cta" onClick={() => open("autopilot")} disabled={!plan?.pins.length}>
+          <span className="autopilot-cta__mark" aria-hidden="true">
+            ✦
+          </span>
+          <span className="autopilot-cta__text">
+            <b>Build the campaign with Autopilot</b>
+            <small>A script, a video and a budget for {plan?.pins.length ? `these ${plan.pins.length} pins` : "every pin"}</small>
+          </span>
+          <kbd aria-hidden="true">{KEYS.autopilot}</kbd>
+        </button>
         <button type="button" className="btn btn--primary btn--block" onClick={() => open("export")} disabled={!plan?.pins.length}>
           Export to Meta &amp; Google <span aria-hidden="true">↓</span>
         </button>

@@ -23,8 +23,9 @@ const closeCard = () => useStore.getState().select(null);
 
 /**
  * The tour follows the three-panel flow a buyer actually takes: business → what matters →
- * read the map → why one block → where the pins went → export. Step 4 opens a real cell (the
- * best one) instead of describing a card that isn't on screen.
+ * read the map → why one block → where the pins went → export, then Autopilot, which does
+ * every step at once. The "why one block" step opens a real cell (the best one) instead of
+ * describing a card that isn't on screen.
  */
 export const STEPS: Step[] = [
   {
@@ -53,7 +54,7 @@ export const STEPS: Step[] = [
     target: ".legend__ramp",
     side: "top",
     title: "Darker blue = better fit",
-    body: "Pale blocks are a weaker match, grey ones are below average. Areas with too few homes stay unshaded.",
+    body: "Pale blocks are a weaker match, grey ones are below average, and coral ones are held back by something you avoid. Hover the legend to spotlight each kind.",
     before: closeCard,
   },
   {
@@ -79,10 +80,17 @@ export const STEPS: Step[] = [
     },
   },
   {
-    target: ".panel__foot .btn",
+    target: ".panel__foot .btn--primary",
     side: "left",
     title: "Then take it to your ads",
     body: "Export ZIP codes and radius pins that paste straight into Meta and Google Ads.",
+    before: closeCard,
+  },
+  {
+    target: ".autopilot-cta",
+    side: "left",
+    title: "Or let Autopilot do all of it",
+    body: "One sentence and a budget: it places the pins, splits the money, writes a script and makes a video ad for every pin, and designs the lift test. You review it all; nothing launches, and one click undoes it.",
     before: closeCard,
   },
 ];

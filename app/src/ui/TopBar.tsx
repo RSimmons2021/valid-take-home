@@ -85,7 +85,7 @@ export function TopBar() {
         <AutopilotPill />
         <button
           type="button"
-          className="btn btn--ghost top__autopilot"
+          className="btn top__autopilot"
           onClick={() => open("autopilot")}
           disabled={!plan}
           data-tip="Build the whole campaign: weights, pins, budget, a script and video per pin, and a lift test"

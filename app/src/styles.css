@@ -3842,3 +3842,104 @@ dt[data-tip] {
     animation: none;
   }
 }
+
+/* ---------- Autopilot, given its weight ----------
+   The one AI accent in the chrome: a solid ink surface inside a blue→cyan ring. It reads as
+   "the thing that does the work for you", distinct from Export's flat blue. The ring turns
+   only on hover: an endless loop would repaint the chrome every frame next to a WebGL map. */
+@property --ap-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.top__autopilot,
+.autopilot-cta {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(var(--solid), var(--solid)) padding-box,
+    conic-gradient(from var(--ap-angle), var(--blue), var(--cyan), #8a92ff, var(--blue)) border-box;
+  color: var(--on-solid);
+}
+@media (hover: hover) and (pointer: fine) {
+  .top__autopilot:hover:not(:disabled),
+  .autopilot-cta:hover:not(:disabled) {
+    animation: ap-ring 2.4s linear infinite;
+  }
+}
+@keyframes ap-ring {
+  to {
+    --ap-angle: 360deg;
+  }
+}
+.top__autopilot {
+  height: 34px;
+  padding: 0 14px;
+  font-weight: 600;
+  box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--blue) 70%, transparent);
+}
+.top__autopilot .ai-mark {
+  color: var(--cyan);
+}
+@media (hover: hover) and (pointer: fine) {
+  .top__autopilot:hover:not(:disabled),
+  .autopilot-cta:hover:not(:disabled) {
+    box-shadow: 0 8px 26px -8px color-mix(in srgb, var(--cyan) 70%, transparent);
+  }
+}
+.autopilot-cta {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  text-align: left;
+  box-shadow: 0 10px 28px -14px color-mix(in srgb, var(--blue) 80%, transparent);
+  transition:
+    transform var(--press) var(--ease-out),
+    box-shadow var(--fast) var(--ease-out);
+}
+.autopilot-cta:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.autopilot-cta:disabled {
+  opacity: 0.5;
+}
+.autopilot-cta__mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--cyan) 18%, transparent);
+  color: var(--cyan);
+  font-size: 17px;
+}
+.autopilot-cta__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.autopilot-cta__text b {
+  font: 600 14px/1.25 var(--sans);
+}
+.autopilot-cta__text small {
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--on-solid) 68%, transparent);
+}
+.autopilot-cta kbd {
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--on-solid) 25%, transparent);
+  font: 500 11px var(--mono);
+  color: color-mix(in srgb, var(--on-solid) 75%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .top__autopilot:hover,
+  .autopilot-cta:hover {
+    animation: none !important;
+  }
+}
