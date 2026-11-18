@@ -1,7 +1,8 @@
 import type { Metro } from "../data/metro";
-import { mulberry32, zipFeatures } from "./calibrate";
+import { mulberry32 } from "./calibrate";
 import { plannedZips } from "./export";
 import type { Weights } from "./factors";
+import { scoreCells } from "./score";
 import type { Plan } from "./plan";
 
 /**
@@ -43,7 +44,7 @@ export interface Balance {
   covariate: "Fit score" | "Homes (log)" | "Detached share";
   test: number;
   control: number;
-  smd: number;
+  smd: number | null;
   verdict: "good" | "fair" | "poor";
 }
 
@@ -72,12 +73,24 @@ function meanSd(v: number[]) {
 
 /** The plan's ZIPs (≥ minShare of their homes reached), described for matching. */
 export function targetUnits(metro: Metro, plan: Plan, weights: Weights, minHomes: number, minShare = 0.5): ZipUnit[] {
-  const feats = zipFeatures(metro, weights, minHomes);
-  return plannedZips(metro, plan)
-    .filter((r) => r.share >= minShare)
-    .map((r) => feats.get(r.code))
-    .filter((f): f is NonNullable<typeof f> => !!f && !Number.isNaN(f.score))
-    .map((f) => ({ zip: f.zip, homes: f.homes, score: f.score, detached: f.factors.single ?? 0.5 }))
+  const { score } = scoreCells(metro, { weights, minHomes });
+  const stats = metro.zips.map(() => ({ rooftops: 0, single: 0, scoredHomes: 0, weightedScore: 0 }));
+  for (let i = 0; i < metro.n; i++) {
+    const zip = stats[metro.zip[i]];
+    if (!zip) continue;
+    zip.rooftops += metro.rooftops[i];
+    zip.single += metro.single[i] * metro.rooftops[i];
+    if (Number.isFinite(score[i])) {
+      zip.scoredHomes += metro.homes[i];
+      zip.weightedScore += score[i] * metro.homes[i];
+    }
+  }
+  const covered = new Set(plannedZips(metro, plan).filter((r) => r.share >= minShare).map((r) => r.code));
+  return metro.zips.flatMap(({ code, homes }, i) => {
+    const z = stats[i];
+    if (!covered.has(code) || !z.scoredHomes || !z.rooftops) return [];
+    return [{ zip: code, homes, score: z.weightedScore / z.scoredHomes, detached: z.single / z.rooftops }];
+  })
     .sort((a, b) => b.homes - a.homes || a.zip.localeCompare(b.zip));
 }
 
@@ -116,20 +129,19 @@ export function assign(target: ZipUnit[], seed = 1): LiftDesign {
     const T = meanSd(pairs.map((p) => covariates(p.test)[j]));
     const C = meanSd(pairs.map((p) => covariates(p.control)[j]));
     const pooled = Math.sqrt((T.sd ** 2 + C.sd ** 2) / 2);
-    const smd = pooled ? (T.m - C.m) / pooled : 0;
-    const a = Math.abs(smd);
+    const smd = pooled ? (T.m - C.m) / pooled : pairs.length && T.m === C.m ? 0 : null;
+    const a = Math.abs(smd ?? Infinity);
     return { covariate, test: T.m, control: C.m, smd, verdict: a < 0.1 ? "good" : a < 0.25 ? "fair" : "poor" };
   });
 
   const testHomes = pairs.reduce((s, p) => s + p.test.homes, 0) + (unpaired?.homes ?? 0);
   const controlHomes = pairs.reduce((s, p) => s + p.control.homes, 0);
-  const worst = Math.max(0, ...balance.map((b) => Math.abs(b.smd)));
+  const worst = Math.max(0, ...balance.map((b) => Math.abs(b.smd ?? Infinity)));
   const quality: LiftDesign["quality"] = pairs.length >= 10 && worst < 0.1 ? "good" : pairs.length >= 6 && worst < 0.25 ? "fair" : "weak";
 
   const notes: string[] = [];
-  if (pairs.length < 6) notes.push(`Only ${pairs.length} pair${pairs.length === 1 ? "" : "s"}: add pins or widen the radius, or the test will only detect a very large lift.`);
-  else if (pairs.length < 10) notes.push(`${pairs.length} pairs: enough to detect a large lift (roughly 25% or more); more pairs detect smaller ones.`);
-  if (worst >= 0.25) notes.push("A covariate is poorly balanced in this shuffle. Reshuffle, or treat the measured lift as directional.");
+  if (pairs.length < 10) notes.push(`Only ${pairs.length} matched pair${pairs.length === 1 ? "" : "s"}. Check historical conversion volume and variability before choosing a test duration.`);
+  if (pairs.length && worst >= 0.25) notes.push("A covariate is poorly balanced in this shuffle. Reshuffle, or treat the measured lift as directional.");
 
   return {
     pairs,
@@ -150,7 +162,7 @@ export function designLiftTest(metro: Metro, plan: Plan, weights: Weights, minHo
 
 /** Best-balanced of `tries` shuffles starting at `start`: re-randomisation, a standard fix for small designs. */
 export function bestShuffle(target: ZipUnit[], start = 1, tries = 20): LiftDesign {
-  const worst = (d: LiftDesign) => Math.max(0, ...d.balance.map((b) => Math.abs(b.smd)));
+  const worst = (d: LiftDesign) => Math.max(0, ...d.balance.map((b) => Math.abs(b.smd ?? Infinity)));
   let best = assign(target, start);
   for (let s = start + 1; s < start + tries; s++) {
     const d = assign(target, s);

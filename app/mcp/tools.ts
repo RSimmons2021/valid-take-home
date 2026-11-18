@@ -233,7 +233,7 @@ export function createCatchmentServer(deps: Deps): McpServer {
       return text({
         quality: d.quality,
         pairs: d.pairs.map((p) => ({ test_zip: p.test.zip, control_zip: p.control.zip, test_homes: Math.round(p.test.homes), control_homes: Math.round(p.control.homes) })),
-        balance: d.balance.map((b) => ({ covariate: b.covariate, smd: +b.smd.toFixed(3), verdict: b.verdict })),
+        balance: d.balance.map((b) => ({ covariate: b.covariate, smd: b.smd === null ? null : +b.smd.toFixed(3), verdict: b.verdict })),
         held_out_share: +d.holdoutShare.toFixed(3),
         notes: d.notes,
         how_to_run: "Target only the test ZIPs; exclude control ZIPs from all campaigns for 2-4 weeks; lift = test conversions per home / control conversions per home - 1.",

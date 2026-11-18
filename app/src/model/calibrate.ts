@@ -113,8 +113,9 @@ export function parseResults(text: string): ParsedResults {
     byZip.set(zip!, {
       zip: zip!,
       conversions: (prev?.conversions ?? 0) + conversions!,
-      impressions: impressions == null ? prev?.impressions : (prev?.impressions ?? 0) + impressions,
-      spend: spend == null ? prev?.spend : (prev?.spend ?? 0) + spend,
+      // A missing denominator on any day makes the ZIP total incomplete.
+      impressions: impressions == null || (prev && prev.impressions == null) ? undefined : (prev?.impressions ?? 0) + impressions,
+      spend: spend == null || (prev && prev.spend == null) ? undefined : (prev?.spend ?? 0) + spend,
     });
   });
   const rows = [...byZip.values()];

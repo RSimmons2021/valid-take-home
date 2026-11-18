@@ -38,14 +38,12 @@ Planning says where to spend. These two features close the loop: **did it work, 
 **Method: matched-pair randomisation within the plan's own ZIPs**
 
 1. Take the ZIPs the pins mostly cover (at least 50% of their homes by default).
-2. Pair them greedily by similarity on fit score, log homes and detached share (standardised), largest first.
+2. Count homes across the whole assigned ZIP and weight each cell’s single-address share by its rooftop count. Compute fit from scored homes. Pair ZIPs greedily by similarity on fit score, log homes and detached share (standardised), largest first.
 3. Flip a seeded coin in each pair: one ZIP is advertised to (test), the other held out (control). An odd ZIP out stays in test and isn't compared.
-4. **Re-randomise:** keep the best-balanced of 20 shuffles. Pairing is computed once, so this is instant.
+4. **Re-randomise:** keep the best-balanced of 20 shuffles. Each candidate split uses the same pairs.
 5. Report balance as standardised mean differences (|SMD| < 0.1 good, < 0.25 fair), and rate the design good, fair or weak with notes on the number of pairs.
 
-**Results on real data.** Balance is good or fair everywhere except Austin, which has too few pairs and says so. About half of the plan's homes get no ads during the test, and that cost is stated in the UI.
-
-**Running it.** Target the test ZIPs, exclude the controls from every campaign for 2–4 weeks, then compute lift = test conversions per home ÷ control conversions per home − 1, pair by pair. Spillover across adjacent ZIPs biases lift towards zero, so a measured lift is conservative.
+**Running it.** Target the test ZIPs and exclude the controls. Choose the test duration using historical conversion volume and variability. The balance table describes the split. It does not estimate statistical power. Compare conversions per home within each pair and check for delivery across adjacent ZIP boundaries.
 
 The Export ▸ Lift test tab copies both lists, downloads the pairs as CSV, reshuffles, and draws the split on the map. The MCP tool `design_lift_test` returns the same design.
 

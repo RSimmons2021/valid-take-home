@@ -224,7 +224,7 @@ export function campaignKit({ metro, plan, business, budget, monthly, scripts, l
     L.push(`${lift.pairs.length} matched ZIP pairs · ${lift.quality} design · ${pct(lift.holdoutShare)} of the plan's homes held out.`);
     L.push(`- Advertise to: ${lift.pairs.map((p) => p.test.zip).join(", ")}${lift.unpaired ? `, ${lift.unpaired.zip}` : ""}`);
     L.push(`- Hold out: ${lift.pairs.map((p) => p.control.zip).join(", ")}`);
-    L.push("- Run 2–4 weeks, then compare conversions per home, pair by pair.");
+    L.push("- Set the test window using historical conversion volume, then compare conversions per home within each pair.");
     L.push("");
   }
   return `${L.join("\n")}\n`;

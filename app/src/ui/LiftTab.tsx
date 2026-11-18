@@ -7,7 +7,7 @@ import { toast } from "./toast";
 
 const QUALITY: Record<string, string> = {
   good: "Well balanced, enough pairs",
-  fair: "Usable for large effects",
+  fair: "At least six pairs with acceptable balance",
   weak: "Too few pairs or poor balance",
 };
 
@@ -90,7 +90,7 @@ export function LiftTab({ minShare, base }: { minShare: number; base: string }) 
               <td>{b.covariate === "Detached share" ? pct(b.test) : b.test.toFixed(b.covariate === "Fit score" ? 0 : 2)}</td>
               <td>{b.covariate === "Detached share" ? pct(b.control) : b.control.toFixed(b.covariate === "Fit score" ? 0 : 2)}</td>
               <td>
-                <span className={`smd smd--${b.verdict}`}>{b.smd.toFixed(2)}</span>
+                <span className={`smd smd--${b.verdict}`}>{b.smd?.toFixed(2) ?? "N/A"}</span>
               </td>
             </tr>
           ))}
@@ -109,7 +109,7 @@ export function LiftTab({ minShare, base }: { minShare: number; base: string }) 
         <li>
           <b>Exclude the control ZIPs</b> from every campaign for the test window ({controlZips.length}).
         </li>
-        <li>Run 2–4 weeks without changing the split.</li>
+        <li>Set the test window using historical conversion volume and keep the split fixed.</li>
         <li>
           Compare conversions per 1,000 homes: lift = test rate ÷ control rate − 1, pair by pair. The pairs CSV lists each pair's homes.
         </li>

@@ -13,6 +13,15 @@ describe("parseResults", () => {
     ]);
   });
 
+  it("uses complete spend when a daily row is missing impressions", () => {
+    const rows = ["94110,2,100,5", "94110,3,,10"];
+    for (const ordered of [rows, [...rows].reverse()]) {
+      const result = parseResults(["zip,conversions,impressions,spend", ...ordered].join("\n"));
+      expect(result.exposure).toBe("spend");
+      expect(result.rows[0]).toMatchObject({ conversions: 5, impressions: undefined, spend: 15 });
+    }
+  });
+
   it("reports bad lines instead of guessing", () => {
     const r = parseResults("zip,conversions\nhello,1\n94110,-2\n94114,3\n");
     expect(r.rows).toHaveLength(1);
