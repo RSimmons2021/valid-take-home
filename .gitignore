@@ -8,3 +8,8 @@ pipeline/data/
 *.tmp.*
 .DS_Store
 *.tsbuildinfo
+
+# Secrets: real keys live only in .env (local) or the host's environment settings.
+.env
+.env.*
+!.env.example
