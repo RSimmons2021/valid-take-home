@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { useAutopilot } from "../autopilot/store";
 import { Swap, useFlip } from "./motion";
 import { WEIGHTS, WEIGHT_LABEL, type Factor, type Weight, factorsFor } from "../model/factors";
 import { PROFILES, isPristine, profileById } from "../model/profiles";
@@ -26,6 +27,7 @@ export function BusinessPanel() {
   const applied = useAi((s) => s.applied);
   const undoApplied = useAi((s) => s.undoApplied);
   const aiAvailable = useAi((s) => s.available);
+  const aiBrief = useAi((s) => s.brief);
   const aiActive = applied != null && profileId === CUSTOM_PROFILE;
 
   const profile = profileById(profileId);
@@ -84,6 +86,20 @@ export function BusinessPanel() {
             profile && <p className="panel__blurb">{profile.blurb}</p>
           )}
         </Swap>
+        {!aiBrief.trim() && (
+          <p className="brief__autopilot appear">
+            <button
+              type="button"
+              className="link"
+              onClick={() => {
+                useAutopilot.getState().setBrief("");
+                useStore.getState().open("autopilot");
+              }}
+            >
+              ✦ Let Autopilot build the whole {(aiActive ? applied.name : (profile?.label ?? "")).toLowerCase()} campaign
+            </button>
+          </p>
+        )}
 
         <div ref={listsRef}>
           <div className="panel__head">

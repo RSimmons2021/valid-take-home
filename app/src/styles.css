@@ -3530,9 +3530,6 @@ dt[data-tip] {
 }
 
 /* ---------- autopilot ---------- */
-.top__autopilot .ai-mark {
-  color: var(--blue-text);
-}
 .appill {
   display: inline-flex;
   align-items: center;
@@ -3844,7 +3841,7 @@ dt[data-tip] {
 }
 
 /* ---------- Autopilot, given its weight ----------
-   The one AI accent in the chrome: a solid ink surface inside a blue→cyan ring. It reads as
+   The one AI accent in the panel: a solid ink surface inside a blue→cyan ring. It reads as
    "the thing that does the work for you", distinct from Export's flat blue. The ring turns
    only on hover: an endless loop would repaint the chrome every frame next to a WebGL map. */
 @property --ap-angle {
@@ -3852,7 +3849,6 @@ dt[data-tip] {
   inherits: false;
   initial-value: 0deg;
 }
-.top__autopilot,
 .autopilot-cta {
   border: 1.5px solid transparent;
   background:
@@ -3861,7 +3857,6 @@ dt[data-tip] {
   color: var(--on-solid);
 }
 @media (hover: hover) and (pointer: fine) {
-  .top__autopilot:hover:not(:disabled),
   .autopilot-cta:hover:not(:disabled) {
     animation: ap-ring 2.4s linear infinite;
   }
@@ -3871,17 +3866,7 @@ dt[data-tip] {
     --ap-angle: 360deg;
   }
 }
-.top__autopilot {
-  height: 34px;
-  padding: 0 14px;
-  font-weight: 600;
-  box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--blue) 70%, transparent);
-}
-.top__autopilot .ai-mark {
-  color: var(--cyan);
-}
 @media (hover: hover) and (pointer: fine) {
-  .top__autopilot:hover:not(:disabled),
   .autopilot-cta:hover:not(:disabled) {
     box-shadow: 0 8px 26px -8px color-mix(in srgb, var(--cyan) 70%, transparent);
   }
@@ -3938,7 +3923,6 @@ dt[data-tip] {
   color: color-mix(in srgb, var(--on-solid) 75%, transparent);
 }
 @media (prefers-reduced-motion: reduce) {
-  .top__autopilot:hover,
   .autopilot-cta:hover {
     animation: none !important;
   }

@@ -1,6 +1,8 @@
 import { useCallback, useState } from "react";
 import { currentBusiness, useAi } from "../ai/store";
+import { BRIEF_EXAMPLES } from "../ai/examples";
 import { campaignKit, pinsForBudget } from "../model/campaign";
+import { PROFILES } from "../model/profiles";
 import { pinName } from "../model/export";
 import { useStore } from "../state/store";
 import { download, slug } from "../ui/format";
@@ -25,6 +27,8 @@ function AskView() {
   const pins = useStore((s) => s.pins);
   const budget = parseBudget(ap.monthly);
   const business = currentBusiness().name;
+  const profileId = useStore((s) => s.profileId);
+  const setProfile = useStore((s) => s.setProfile);
   return (
     <form
       className="autopilot"
@@ -44,9 +48,28 @@ function AskView() {
         Autopilot picks the weights, places pins your budget can feed, splits the budget, writes a script and makes a video for every pin,
         and designs the lift test. You review everything; nothing is launched or spent, and one click undoes it all.
       </p>
+      <div className="autopilot__field" role="group" aria-label="Start from a business type">
+        <span>Start from a business</span>
+        <div className="profiles">
+          {PROFILES.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className="profile"
+              aria-pressed={p.id === profileId && !ap.brief.trim()}
+              onClick={() => {
+                setProfile(p.id);
+                ap.setBrief("");
+              }}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
       {aiOn ? (
         <label className="autopilot__field">
-          <span>Describe the business</span>
+          <span>Or describe it in your own words</span>
           <textarea
             rows={2}
             maxLength={500}
@@ -55,6 +78,13 @@ function AskView() {
             onChange={(e) => ap.setBrief(e.target.value)}
           />
           <small>Leave it empty to keep {business}.</small>
+          <span className="brief__examples">
+            {BRIEF_EXAMPLES.map((ex) => (
+              <button key={ex} type="button" className="chip" onClick={() => ap.setBrief(ex)}>
+                {ex}
+              </button>
+            ))}
+          </span>
         </label>
       ) : (
         <p className="notice">AI isn't connected here, so Autopilot keeps {business} and writes each script from the data: real places, no AI.</p>

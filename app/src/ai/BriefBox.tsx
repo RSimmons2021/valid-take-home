@@ -6,13 +6,10 @@ import { usageLine } from "./client";
 import { Bone, StagedProgress } from "../ui/Progress";
 import { AutoHeight } from "../ui/motion";
 import { useAutopilot } from "../autopilot/store";
+import { BRIEF_EXAMPLES as EXAMPLES } from "./examples";
 import { useAi } from "./store";
 
-const EXAMPLES = [
-  "Premium mobile dog grooming for busy families with yards",
-  "Solar panel installer for homeowners",
-  "Boutique pilates studio for young professionals",
-];
+
 
 /**
  * "Describe your business" → suggested weights. The suggestion is shown as a reviewable

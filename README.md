@@ -23,7 +23,7 @@ First-time visitors get a welcome card, then a guided tour drawn in hand-written
 
 ## Autopilot: the whole campaign from one sentence
 
-Press **✦ Autopilot** (or `A`), describe the business, give a monthly budget, and it runs the steps a media buyer and a creative team would, live on the map:
+Click **Build the campaign with Autopilot** above Export (or press `A`, or pick "Let Autopilot build…" under any business type), describe the business, give a monthly budget, and it runs the steps a media buyer and a creative team would, live on the map:
 
 1. **Understand the business:** the brief becomes weights, each with a reason.
 2. **Place the pins:** as many as the budget can feed at $5 a day or more.
