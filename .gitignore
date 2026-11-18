@@ -13,3 +13,4 @@ pipeline/data/
 .env
 .env.*
 !.env.example
+dist-mcp/
