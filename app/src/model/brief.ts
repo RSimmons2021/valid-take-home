@@ -14,6 +14,7 @@ import { MILE, type Pin } from "./plan";
 export interface BriefAngle {
   angle: string;
   headline: string;
+  title?: string;
   body: string;
   scene: string;
   cites: { id: string; name: string; kind: string }[];
@@ -29,11 +30,13 @@ export interface BriefInput {
   date: Date;
 }
 
-interface Ref {
+export interface Ref {
   name: string;
   kind: string;
   id: string;
   distanceM: number;
+  lat: number;
+  lon: number;
 }
 
 /** Real places inside the pin for signals the user weighted, nearest first, one per name. */
@@ -46,7 +49,7 @@ export function pinPlaces(metro: Metro, pin: Pin, weights: Weights, want: "prefe
     if (want === "preferred" ? w <= 0 || p.confidence[k] < 0.7 : w >= 0) continue;
     const [x, y] = project(p.lat[k], p.lon[k], metro.info.center);
     const d = Math.hypot(x - metro.x[pin.cell], y - metro.y[pin.cell]);
-    if (d <= r) rows.push({ name: p.name[k], kind: metro.signals[p.signal[k]].label, id: p.id[k], distanceM: d });
+    if (d <= r) rows.push({ name: p.name[k], kind: metro.signals[p.signal[k]].label, id: p.id[k], distanceM: d, lat: p.lat[k], lon: p.lon[k] });
   }
   rows.sort((a, b) => a.distanceM - b.distanceM || a.id.localeCompare(b.id));
   const seen = new Set<string>();
@@ -97,6 +100,7 @@ export function creativeBrief({ metro, pin, weights, business, angles, link, dat
       L.push("");
       L.push(`### ${k + 1}. ${a.angle}`);
       L.push(`**${a.headline}**`);
+      if (a.title) L.push(`On-screen title: “${a.title}”`);
       L.push("");
       L.push(a.body);
       L.push("");
