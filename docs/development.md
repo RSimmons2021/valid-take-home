@@ -21,7 +21,9 @@ npm ci
 npm run dev          # http://localhost:5173 (proxies /api to :8787)
 npm run dev:server   # AI + static server on :8787, reads ../.env, restarts on change
 npm start            # production server: serves dist/ and /api
-npm test             # vitest: model, sketch and server tests (46)
+npm test             # vitest: model, server, MCP, history, matcher (89)
+npm run e2e          # Playwright flows + axe audit on dist/ (run npm run build first)
+npm run mcp:build    # bundle the MCP server → dist-mcp/catchment-mcp.js
 npm run typecheck    # tsc -b
 npm run lint         # oxlint src server
 npm run build        # static site → app/dist (relative base, deployable anywhere)
@@ -30,13 +32,13 @@ npm run preview      # serve app/dist on :4173
 # pipeline
 cd pipeline
 uv sync
-uv run pytest -q                       # 27 tests, offline
+uv run pytest -q                       # 28 tests, offline
 uv run ruff check . && uv run ruff format --check .
 uv run python -m catchment all         # extract + build all metros
 uv run python -m catchment build denver
 ```
 
-CI (`.github/workflows/ci.yml`) runs exactly these checks on every push and PR: ruff, ruff format and pytest for the pipeline; lint, typecheck, test and build for the app.
+CI (`.github/workflows/ci.yml`) runs exactly these checks on every push and PR: ruff, ruff format and pytest for the pipeline; lint, typecheck, test, build and the MCP build for the app; and an e2e job (Playwright + axe, traces uploaded on failure).
 
 ## Deploying
 
@@ -94,5 +96,6 @@ A private window works too.
 | Extraction fails with `Could not resolve hostname` | Transient DNS or S3 hiccup. Re-run: finished layers are cached and skipped. |
 | Map labels missing | The glyph host (`protomaps.github.io`) is unreachable. Data layers still work. |
 | No "Describe your business" box | `/api/health` reports `ai: false`: the server isn't running (`npm run dev:server`), or `OPENAI_API_KEY` is missing from `../.env`. |
+| `/s` links or `/api/previews` return 404 locally | The AI server is running old code. Node's `--watch` can miss changes on some mounts (it did on an SD card), so restart `npm run dev:server`. |
 | AI answers look stale after editing a prompt | The server caches responses by request. Restart it (the cache is in memory), or click Regenerate for angles. |
 | A metro shows few ZIPs or odd labels | Check the build log's ledger and `units_per_rooftop`, and read [data-pipeline.md §6](data-pipeline.md#6-data-realities-found-while-building). |

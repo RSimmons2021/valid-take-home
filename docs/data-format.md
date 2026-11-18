@@ -44,6 +44,7 @@ A list of the available metros. The app loads it first, to fill the metro picker
 | `names` | string[] | Interned neighbourhood and city names. `hexes.hood` and `hexes.city` index into it. |
 | `zips` | `{code, homes}[]` | ZIPs and their total homes. `hexes.zip` indexes into it. |
 | `hexes` | object of arrays | One entry per cell (below) |
+| `changes` | object \| null | Places changed since the previous release: `since`, `added` and `closed` (columnar: id, name, signal, lon, lat), and `totals` |
 | `places` | object of arrays | Named places that map to a signal (below) |
 
 ### `hexes` (length = number of cells, sorted by H3 id)

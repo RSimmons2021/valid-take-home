@@ -21,6 +21,9 @@ Catchment is a geo-targeting planner for local-service ads, built on Overture Ma
 | UI components, tour, tooltips, select | `app/src/ui/` |
 | AI server: prompts, schemas, validation, guards | `app/server/` (see `docs/ai.md`) |
 | AI client, store, brief box | `app/src/ai/` |
+| Calibration, lift test, release changes, creative brief | `app/src/model/` (`calibrate`, `holdout`, `changes`, `brief`), see `docs/measurement.md` |
+| MCP server | `app/mcp/` (see `docs/mcp.md`) |
+| E2E + accessibility | `app/e2e/` (`npm run e2e` after `npm run build`) |
 | Why something is the way it is | `docs/decisions.md` |
 
 ## Commands
@@ -48,6 +51,8 @@ Run the checks for whichever side you touched before finishing. CI runs all of t
 10. **The OpenAI key is server-only.** Read it in `app/server/` only, never with a `VITE_` prefix, and never commit `.env`.
 11. **AI proposes inputs, never outputs.** Models may suggest weights or wording; scores, pins and exports stay deterministic. New AI routes go through `guarded()` in `server/api.ts` (validation, cache, rate limit, budget) and use schema enums wherever the answer must come from a known set.
 12. **Ad copy is grounded.** Angles may only cite server-chosen places, and they must pass `verifyAngles`. Don't loosen this to make the copy "better".
+13. **Contrast holds in both themes.** Blue text uses `--blue-text`, not `--blue`. The axe audit in `e2e/` must stay clean.
+14. **Every plan change is undoable.** Change plan inputs through the store's actions (they record history); don't `set()` plan inputs directly.
 
 ## Gotchas
 

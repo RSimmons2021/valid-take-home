@@ -68,6 +68,10 @@ Grounding is enforced three times, so copy can't invent places:
 
    Dropped drafts are counted and their reasons shown in the UI ("1 draft rejected" with a tooltip). They are never silently fixed.
 
+**Video scene prompts.** Each angle also carries a `scene`: a 9:16, ~5-second prompt for AI video tools (Kling, Seedance) describing the kind of place, the neighbourhood's look, the service, the light and the camera move. Scenes must never name a real place, because video models render names as fake signage and trademarks. `verifyAngles` rejects any angle whose scene mentions a grounded place, and counts it.
+
+**Creative brief.** The pin card's *Copy brief / Brief .md* assembles a Markdown hand-off (`src/model/brief.ts`, pure and tested): the audience, verified local references with GERS ids, the angles with scenes, craft notes (hook in 2 s, captions on, the personal-attributes rule), a don't-mention list from avoided signals, and the changes since the last release.
+
 The prompt asks for performance-creative hooks: a hook a scroller gets in two seconds, one concrete benefit, a light call to action, a different route per angle (convenience, routine, local pride, timing), and the business category used as a category, not a brand.
 
 **Regenerate** bumps an `attempt` number. The model doesn't see it, but it changes the cache key, so you get fresh copy. Angles are cached per pin + radius + weights in the browser, so changing targeting never shows stale copy.

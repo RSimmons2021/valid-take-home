@@ -27,6 +27,14 @@
 | `src/ui/tour/` | Guided tour: steps, overlay, hand-drawn SVG generator |
 | `src/ai/` | AI client (`client.ts`), AI store with undo (`store.ts`), the "Describe your business" box (`BriefBox.tsx`) |
 | `src/ui/PinCard.tsx` | One pin's reach and its local ad angles (shares the cell card's slot) |
+| `src/ui/ResultsDialog.tsx` | Learn from results (see [measurement.md](measurement.md)) |
+| `src/ui/LiftTab.tsx` | Export ▸ Lift test, and its map overlay |
+| `src/ui/CommandPalette.tsx`, `fuzzy.ts` | ⌘K palette and its matcher |
+| `src/ui/motion.tsx` | `AnimatedNumber` (rolling stats) and `useFlip` (pin list reorders) |
+| `src/ui/PrintPlan.tsx` | The client one-pager (print-only) |
+| `src/ui/share.ts`, `src/map/snapshot.ts` | Share links with previews; map snapshots |
+| `src/ui/edges.tsx` | Tab title, offline banner, error boundary |
+| `src/state/history.ts` | Undo/redo snapshots, coalescing, change labels |
 | `src/styles.css` | Design tokens (light and dark) and all component styles |
 
 ## State (`state/store.ts`)
@@ -141,12 +149,35 @@ See [ai.md](ai.md) for the server side.
 - **Pin card.** It opens when a pin is focused (from the list or its marker). It shows the pin's homes, on-target share, fit and rank, then **Write 3 angles**. Results show the angle type, headline, body, verified place chips (✓, with the GERS ID in a tooltip), Copy, Regenerate, and a footer with the grounding count, rejected drafts and cost. Angles are stored per pin + radius + weights.
 - Every AI result shows its provenance: model, seconds, cost, and "schema-checked" or "grounded in N places".
 
+## Power-user layer
+
+- **⌘K / Ctrl+K** opens the command palette: actions, metros, business types, pins, radius and pin count. It's an ARIA combobox and listbox; the fuzzy matcher favours word starts ("lp" → Lincoln Park). The top bar has a "Search ⌘K" button.
+- **Undo and redo** (⌘Z, ⇧⌘Z or Ctrl+Y) cover every plan change, including AI and calibration applies.
+  - History stores `PlanState` snapshots (the URL's inputs), so each step is a reproducible plan.
+  - Same-kind changes within 600 ms coalesce, and undo crosses metro switches.
+  - A toast names what changed.
+  - The shortcuts are ignored while typing in a text field.
+- **Motion that explains change.** Stats roll to new values with tabular figures, and the pin list animates reorders (FLIP, keyed by cell). A polite live region announces "Plan updated: N pins, X homes, Y% on target" after edits settle.
+
+## Hand-offs
+
+- **Client one-pager.** ⌘P, the palette, or Export ▸ Files prints a document built from live state: the stats, the real map (snapshotted as printing starts; the map keeps `preserveDrawingBuffer`), the pin table, the reasoning, the lift test, the ZIPs and the caveats. Print CSS forces the light tokens.
+- **Link previews.** With the server, "Copy link" makes `/s?h=…&t=…&d=…&img=…`. The server answers with Open Graph tags and an instant redirect into the app; `img` is a 1200×630 snapshot uploaded to `/api/previews`. Without a server it copies the plain URL.
+- **Pin card.** It shows reach, then *Since <release>* (changes read through the weights: new listings of avoided signals and closures of preferred ones are alerts), local ad angles with video scene prompts, and **Copy brief / Brief .md**, a grounded creative brief (`model/brief.ts`).
+
+## Edge states
+
+- The tab title names the plan.
+- Going offline shows a banner saying what still works.
+- An error boundary replaces a blank page with "Reload the plan" (nothing is lost; the plan is in the URL) and "Copy error details".
+
 ## Accessibility checklist (what's in place)
 
 - Every control is a native button, or follows an ARIA pattern (radiogroups for weights, radius and view; listbox for selects; dialog for modals and tour notes).
 - Visible focus ring (`:focus-visible`, 2 px blue).
 - Text alternatives: pin markers have aria-labels with their neighbourhood, and tooltips are announced via `aria-describedby`.
 - Reduced motion is respected everywhere.
+- Contrast: text meets WCAG AA (4.5:1) in both themes. `--muted` is `#63666d`, and blue *text* uses `--blue-text` (`#8a92ff` in dark) while fills keep `--blue`. Enforced by the axe audit in `e2e/` (light and dark).
 - Escape closes, in order: menus, tour, cell card, focused pin.
 
 ## Adding things

@@ -142,3 +142,41 @@ Radar's literal cursor lens was left out, because on a planning tool hiding part
 
 **Decision.** The angle lint rejects personal-trait phrasing ("Are you a dog owner?"), which Meta's personal-attributes policy disallows, as well as emoji and hashtags.
 **Why.** Copy that gets an ad rejected is worse than no copy. The rule is enforced in code, not left to the prompt.
+
+### 25. Calibrate by searching the decision, not by modelling every factor
+
+**Context.** Turning campaign results into weight changes on ~50 ZIPs with 16 collinear factors.
+**Decision.** A greedy search over one-step weight changes. A change is kept only if fit (Spearman, ZIP score vs. conversion rate) improves by at least 0.03 and wins in at least 90% of bootstrap resamples.
+**Rejected.** Per-factor correlation recommended every density signal at once. GCV-tuned ridge shrank effects to noise with falsely tight intervals. Both were tested against simulations with a known truth; details are in [measurement.md](measurement.md).
+**Cost.** Changes are conservative and in-sample. The UI says so and points to the lift test.
+
+### 26. Lift tests randomise within the plan, not against the leftovers
+
+**Context.** The planner targets the best ZIPs, so untargeted ZIPs are worse by construction (SMD 1.5–2.6 on real data).
+**Decision.** Matched-pair randomisation inside the plan's ZIPs, with re-randomisation (best of 20).
+**Cost.** About half of the planned homes get no ads during the test. That's stated in the UI.
+
+### 27. Diff releases by GERS id, and word it honestly
+
+**Decision.** Report places new to Overture and places newly marked closed. Don't report vanished ids. Say "new in Overture", not "opened".
+**Why.** The release added three data sources, and removal is ambiguous. Being precise about what the data can claim matters more than a bigger number.
+
+### 28. One model behind three surfaces
+
+**Decision.** The app, the AI server and the MCP server all call `app/src/model/`. MCP tools are read-only and return `open_in_app` links.
+**Why.** An agent's plan must be the plan a person sees. The link lets a human check an agent's work in one click.
+
+### 29. Previews by snapshot, stored in memory
+
+**Decision.** The browser uploads a map snapshot; the server keeps an in-memory LRU of previews and falls back to a default card.
+**Why.** No storage service to run. A restart degrades to the default card, never to a broken image. Inputs are validated by magic bytes, size and rate.
+
+### 30. axe in CI, not Lighthouse
+
+**Decision.** A Playwright + axe audit (WCAG 2.1 AA, both themes) fails CI on serious violations. Lighthouse CI was dropped.
+**Why.** The axe audit is deterministic and found real contrast bugs (fixed). Lighthouse waits for network quiet, which a live WebGL map rarely reaches: it hung for over 400 s.
+
+### 31. Separate tokens for blue fills and blue text
+
+**Decision.** `--blue` for fills, `--blue-text` for text (`#8a92ff` in dark, at least 5.8:1). `--muted` is darkened to `#63666d`.
+**Why.** The brand blue on near-black was 3.65:1. Lightening `--blue` itself would have broken white-on-blue buttons.

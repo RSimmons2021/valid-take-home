@@ -59,6 +59,9 @@ app/
   public/data/     built metro files (committed) + index.json
   server/          Node server: static files + /api (AI). Runs TypeScript directly (Node ≥ 22.18)
     ai/            brief → plan and ad angles: schemas, prompts, validation, grounding
+    share.ts       link-preview pages (/s) and uploaded plan snapshots
+  mcp/             MCP server: the planner as agent tools (stdio)
+  e2e/             Playwright flows + axe accessibility audit
   src/
     ai/            AI client, AI store, BriefBox
     data/          file types; buildMetro() → typed arrays, neighbour sums, place→cell
@@ -79,6 +82,7 @@ render.yaml        static-site deploy
 - **One release everywhere.** The pipeline (`config.RELEASE`), the data files (`release` field) and the basemap tiles (`basemapStyle(release, …)`) use the same Overture release, so the map and the numbers always agree.
 - **AI proposes, the engine decides.** Models choose inputs (weights) or wording (ad hooks), never scores or pins. AI output is schema-constrained, validated on the server, and reviewed by the user before it changes anything.
 - **Secrets stay server-side.** The OpenAI key is only read by `app/server/main.ts`. The browser bundle is checked to contain no trace of it.
+- **One model, three surfaces.** The browser app, the AI server and the MCP server all call the same pure functions in `app/src/model/`, so a plan is identical wherever it's made.
 - **A minimal backend.** The only server-side code is the static file server and the AI proxy. Accounts, saved plans and ad-platform push are deliberately out of scope. See [decisions.md](decisions.md).
 
 ## Request lifecycle (what happens when you click a weight)

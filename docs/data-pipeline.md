@@ -112,6 +112,16 @@ A ZIP's `homes` total is the sum of homes in the cells assigned to it, which kee
 
 **Output.** `app/public/data/<metro>.json` plus an updated `index.json`. The format is in [data-format.md](data-format.md).
 
+## 5b. What changed since the previous release (`diff.py`)
+
+GERS ids are stable across releases. The pipeline also reads the previous release (`PREVIOUS_RELEASE = 2026-09-23.0`, places only: id, status, confidence) and diffs it by id:
+
+- **added**: a kept, signal-bearing place whose id didn't exist in the previous release. The app says "new in Overture", not "opened": the 2026-10 release added three sources, so a new id can be a newly sourced business.
+- **closed**: a place that was open (or had no status) in the previous release and is closed now. That's a real status change for a known place.
+- Ids that vanished entirely aren't reported: removal can mean closure, a merge, or a source dropping out.
+
+Each metro file gets a `changes` block (85–290 places per metro, plus totals). The app reads it through the user's weights; see [frontend.md](frontend.md).
+
 ## 6. Data realities found while building
 
 These are real properties of the 2026-10-21.0 release that shaped the code. They're worth knowing before changing anything.
@@ -145,7 +155,7 @@ These are real properties of the 2026-10-21.0 release that shaped the code. They
 ## Tests
 
 ```bash
-uv run pytest -q        # 27 tests, offline, about 2 s
+uv run pytest -q        # 28 tests, offline, about 2 s
 uv run ruff check . && uv run ruff format --check .
 ```
 

@@ -18,6 +18,8 @@ The project has three parts. The first two meet at one file per metro:
 | Understand how a score and a plan are computed | [scoring-and-planning.md](scoring-and-planning.md) |
 | Work on the interface | [frontend.md](frontend.md) |
 | Understand or extend the AI features | [ai.md](ai.md) |
+| Learn from campaign results, or design a lift test | [measurement.md](measurement.md) |
+| Use Catchment from an agent (MCP) | [mcp.md](mcp.md) |
 | Know *why* something is the way it is | [decisions.md](decisions.md) |
 | Run, test, deploy or extend it | [development.md](development.md) |
 
