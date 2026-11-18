@@ -139,6 +139,17 @@ const server = createServer(async (req, res) => {
   }
 });
 
+// A busy port is almost always another copy of this server; say so instead of dumping a stack trace.
+server.on("error", (e: NodeJS.ErrnoException) => {
+  if (e.code !== "EADDRINUSE") throw e;
+  console.error(
+    `Port ${PORT} is already in use, most likely by another Catchment server.\n` +
+      `  Find it:  lsof -i :${PORT}   (or: ss -ltnp | grep ${PORT})\n` +
+      `  Or run on another port:  PORT=8788 npm run dev:server   (and point the Vite proxy at it)`,
+  );
+  process.exit(1);
+});
+
 server.listen(PORT, () => {
   console.log(`Catchment server on :${PORT} · AI ${key ? `on (${MODEL})` : "off (no OPENAI_API_KEY)"}`);
 });
