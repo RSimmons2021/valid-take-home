@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { googleRadiusLines, pinsCsv, plannedZips, toCsv } from "./export";
+import { googleRadiusCsv, googleRadiusLines, pinsCsv, plannedZips, toCsv } from "./export";
 import { ON_TARGET, cellValue, planPins } from "./plan";
 import { explain, heldBack, percentileRanks, scoreCells, verdict } from "./score";
 import { fakeMetro } from "./testkit";
@@ -138,9 +138,12 @@ describe("planPins", () => {
 });
 
 describe("exports", () => {
-  it("writes Google's bulk radius format", () => {
+  it("writes Google Ads Editor proximity targets as text and CSV", () => {
     const m = fakeMetro({ k: 4 });
     const plan = planPins(m, new Float64Array(m.n).fill(100), { pins: 1, radiusMi: 1.5 });
+    expect(googleRadiusCsv(plan, 'Summer, "Bay Area"')).toBe(
+      `Campaign,Location\n"Summer, ""Bay Area""",${googleRadiusLines(plan)}\n`,
+    );
     expect(googleRadiusLines(plan)).toMatch(/^\(1\.5mi:37\.\d{6}:-122\.\d{6}\)$/);
   });
 

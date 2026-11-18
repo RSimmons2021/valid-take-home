@@ -8,7 +8,7 @@ Catchment helps a local-service media buyer choose where to advertise in a new c
 
 Pick **San Francisco & Oakland** and choose **Pet care**. With eight 1.5-mile pins, the first pin lands in Western Addition. Click a dark blue block to inspect the nearby places that contributed to its score.
 
-Open **Export plan**. At the default 50% coverage threshold, 34 ZIPs qualify. Raise it to 75% and 22 qualify. That gives the buyer a choice between a broader campaign and fewer ZIPs whose mapped homes are more concentrated inside the pins. Copy the ZIPs, or switch to **Radius pins** for Google Ads Editor. Change a factor and use **Copy link** to share the revised plan.
+Open **Export plan**. At the default 50% coverage threshold, 34 ZIPs qualify. Raise it to 75% and 22 qualify. That gives the buyer a choice between a broader campaign and fewer ZIPs whose mapped homes are more concentrated inside the pins. Copy the ZIPs, or switch to **Radius pins** for a Google Ads Editor import CSV. Change a factor and use **Copy link** to share the revised plan.
 
 For the creative handoff, **Autopilot** can turn the plan into a per-pin budget, local scripts and downloadable videos. The buyer reviews the kit before spending anything.
 

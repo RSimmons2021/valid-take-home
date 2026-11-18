@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { offlineExtras, openPlan } from "./helpers";
@@ -45,6 +46,14 @@ test("buyers can replan for a business and export the resulting locations", asyn
   await expect(exportDialog.getByRole("button", { name: /Copy [1-9]\d* ZIPs/ })).toBeEnabled();
   await exportDialog.getByRole("tab", { name: /Radius pins/ }).click();
   await expect(exportDialog.getByRole("button", { name: "Copy 8 lines" })).toBeEnabled();
+  const editorCsv = exportDialog.getByRole("button", { name: "Download Editor CSV" });
+  await expect(editorCsv).toBeDisabled();
+  await exportDialog.getByRole("textbox", { name: "Campaign name in Google Ads Editor" }).fill("Bay Area, Pet care");
+  const [csv] = await Promise.all([page.waitForEvent("download"), editorCsv.click()]);
+  const lines = (await readFile(await csv.path(), "utf8")).trim().split("\n");
+  expect(lines).toHaveLength(9);
+  expect(lines[0]).toBe("Campaign,Location");
+  expect(lines[1]).toMatch(/^"Bay Area, Pet care",\(1\.5mi:37\.\d{6}:-122\.\d{6}\)$/);
   await exportDialog.getByRole("tab", { name: /Lift test/ }).click();
   await expect(exportDialog.getByRole("button", { name: "Copy test ZIPs" })).toBeEnabled();
   await expect(exportDialog.getByRole("button", { name: "Copy control ZIPs" })).toBeEnabled();

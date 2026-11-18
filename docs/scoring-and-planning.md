@@ -85,15 +85,15 @@ Greedy is guaranteed to reach at least (1 − 1/e) ≈ 63% of the optimal covera
 
 | Export | Format | Where it goes |
 | --- | --- | --- |
-| ZIP list | One ZIP per line, filtered to ZIPs where the pins reach ≥ 25/50/75% of homes (default 50%) | Meta Ads Manager (Locations → Add locations in bulk → postal codes) and Google Ads (Locations → Advanced search → Bulk) |
-| Google radius lines | `(1.5mi:37.774900:-122.419400)` per pin | Google Ads Editor → Keywords and targeting → Locations → Make multiple changes |
+| ZIP list | One US ZIP per line, filtered by mapped-home coverage (50% by default) | Google Ads → Locations → Add locations in bulk. In Meta, review matches if bulk postal-code entry is available. |
+| Google radius CSV | `Campaign,Location` header and one proximity target per pin, such as `(1.5mi:37.774900:-122.419400)` | Google Ads Editor → Account → Import → From file |
 | Pins CSV | `rank,name,latitude,longitude,radius,unit,homes,on_target_homes,mean_score,zip` | Any spreadsheet; recreate pins in any platform |
 | ZIP report CSV | `zip,homes_reached,homes_in_zip,share_reached` | Analysis |
 | GeoJSON | A 64-step circle polygon per pin, with its stats, plus the release, profile and a link back to the plan | GIS tools, other map apps |
 
 `plannedZips` attributes each covered cell's homes to that cell's ZIP. A ZIP's share is reached homes ÷ its total, so a ZIP the plan only clips can be left out.
 
-> The bulk formats follow the platforms' public help pages and community guidance. Check them in a draft campaign before relying on them.
+Google documents one location per line for [bulk location targeting](https://support.google.com/google-ads/answer/1722043) and the proximity syntax for [Google Ads Editor CSV imports](https://support.google.com/google-ads/editor/answer/30573). Meta documents [ZIP targeting](https://developers.facebook.com/docs/ad-targeting-dataset/table-schema/). Meta bulk paste and acceptance by individual ad accounts remain unverified.
 
 ## Limits worth knowing
 

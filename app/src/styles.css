@@ -1202,6 +1202,22 @@ p {
 .export__side .segmented {
   justify-self: start;
 }
+.export__campaign {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.export__campaign input {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+}
+
 .export__actions {
   display: flex;
   flex-wrap: wrap;

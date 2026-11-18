@@ -34,13 +34,15 @@ export function plannedZips(metro: Metro, plan: Plan): ZipRow[] {
 
 const fmt = (v: number, d = 6) => v.toFixed(d);
 const miles = (r: number) => String(r);
+const googleRadius = (pin: Plan["pins"][number]) => `(${miles(pin.radiusMi)}mi:${fmt(pin.lat)}:${fmt(pin.lon)})`;
 
-/**
- * Google Ads bulk radius format, one per line: (radius unit : lat : lng).
- * Paste into the Location column in Google Ads Editor’s Make multiple changes tool.
- */
+/** Proximity targets in Google Ads Editor’s documented Location format. */
 export function googleRadiusLines(plan: Plan): string {
-  return plan.pins.map((p) => `(${miles(p.radiusMi)}mi:${fmt(p.lat)}:${fmt(p.lon)})`).join("\n");
+  return plan.pins.map(googleRadius).join("\n");
+}
+
+export function googleRadiusCsv(plan: Plan, campaign: string): string {
+  return toCsv([["Campaign", "Location"], ...plan.pins.map((pin) => [campaign, googleRadius(pin)])]);
 }
 
 function csvCell(v: string | number | null): string {

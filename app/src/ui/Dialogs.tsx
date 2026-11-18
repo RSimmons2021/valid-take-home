@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { googleRadiusLines, pinsCsv, planGeoJson, plannedZips, zipsCsv } from "../model/export";
+import { googleRadiusCsv, googleRadiusLines, pinsCsv, planGeoJson, plannedZips, zipsCsv } from "../model/export";
 import { profileById } from "../model/profiles";
 import { useStore } from "../state/store";
 import { LiftTab } from "./LiftTab";
@@ -88,6 +88,7 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
   const profileId = useStore((s) => s.profileId);
   const [tab, setTab] = useState<Tab>("zips");
   const [minShare, setMinShare] = useState(0.5);
+  const [campaign, setCampaign] = useState("");
   // direction of travel between tabs, so the new panel slides in from the side it lives on
   const order: Tab[] = ["zips", "google", "lift", "files"];
   const prevTab = useRef(tab);
@@ -151,10 +152,10 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
                 </div>
                 <ol className="steps">
                   <li>
-                    <b>Meta Ads Manager</b> · Ad set ▸ Audience ▸ Locations ▸ <i>Add locations in bulk</i> ▸ Postal code. Paste.
+                    <b>Meta Ads Manager</b> · Look for bulk postal-code entry under ad set audience locations. Review the matched US ZIPs before applying.
                   </li>
                   <li>
-                    <b>Google Ads</b> · Campaign settings ▸ Locations ▸ <i>Advanced search</i> ▸ Bulk locations. Paste.
+                    <b>Google Ads</b> · Campaigns ▸ Locations ▸ Edit ▸ Add locations in bulk. Select United States and search for the pasted ZIPs.
                   </li>
                 </ol>
                 <div className="export__actions">
@@ -202,14 +203,26 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
           {tab === "google" && (
             <div className="export">
               <div className="export__side">
-                <p>Each line is one location target for Google Ads Editor.</p>
+                <p>Download proximity targets for an existing campaign in Google Ads Editor.</p>
+                <label className="export__campaign">
+                  Campaign name in Google Ads Editor
+                  <input type="text" value={campaign} onChange={(e) => setCampaign(e.target.value)} />
+                </label>
                 <ol className="steps">
-                  <li>In Google Ads Editor, select your campaign and open Keywords and targeting → Locations → Make multiple changes.</li>
-                  <li>Use the selected campaign as the destination. Paste one pin per row in the Location column, then process and review the changes.</li>
+                  <li>Enter the campaign name as it appears in Editor.</li>
+                  <li>Choose Account → Import → From file. Review the proposed locations before posting.</li>
                 </ol>
-                <p className="hint">For Meta pins, use the CSV under Files: it has each pin's coordinates and radius.</p>
+                <p className="hint">For Meta pins, use the CSV under Files to look up each pin's coordinates and radius.</p>
                 <div className="export__actions">
-                  <button type="button" className="btn btn--primary" onClick={() => copyText(googleText, `${plan.pins.length} pins`)}>
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    disabled={!campaign.trim() || !plan.pins.length}
+                    onClick={() => download(`${base}-google-ads-editor.csv`, googleRadiusCsv(plan, campaign), "text/csv")}
+                  >
+                    Download Editor CSV
+                  </button>
+                  <button type="button" className="btn btn--ghost" onClick={() => copyText(googleText, `${plan.pins.length} pins`)}>
                     Copy {plan.pins.length} lines
                   </button>
                 </div>
