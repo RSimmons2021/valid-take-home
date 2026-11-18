@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { KEYS } from "./shortcuts";
+import { AutopilotPill } from "../autopilot/AutopilotPanel";
 import { useStore } from "../state/store";
 import { type ThemePref, useTheme } from "../state/theme";
 import { Select } from "./Select";
@@ -81,6 +82,20 @@ export function TopBar() {
           About the data
         </button>
         <CopyLinkButton />
+        <AutopilotPill />
+        <button
+          type="button"
+          className="btn btn--ghost top__autopilot"
+          onClick={() => open("autopilot")}
+          disabled={!plan}
+          data-tip="Build the whole campaign: weights, pins, budget, a script and video per pin, and a lift test"
+          data-keys={KEYS.autopilot}
+        >
+          <span className="ai-mark" aria-hidden="true">
+            ✦
+          </span>
+          Autopilot
+        </button>
         <button
           type="button"
           className="btn btn--primary"

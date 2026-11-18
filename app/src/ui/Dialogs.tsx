@@ -4,6 +4,7 @@ import { profileById } from "../model/profiles";
 import { useStore } from "../state/store";
 import { LiftTab } from "./LiftTab";
 import { ResultsDialog } from "./ResultsDialog";
+import { AutopilotPanel } from "../autopilot/AutopilotPanel";
 import { Glyph } from "./TopBar";
 import { activeSteps } from "./tour/steps";
 import { AnimatedNumber, AutoHeight, Indicator, Swap } from "./motion";
@@ -60,6 +61,14 @@ export function Dialogs() {
   if (dialog === "export") return <ExportDialog onClose={close} />;
   if (dialog === "data") return <DataDialog onClose={close} />;
   if (dialog === "welcome") return <WelcomeDialog onClose={close} />;
+  if (dialog === "autopilot")
+    return (
+      <Modal title="Autopilot" onClose={close} wide>
+        <AutoHeight>
+          <AutopilotPanel />
+        </AutoHeight>
+      </Modal>
+    );
   if (dialog === "results")
     return (
       <Modal title="Learn from results" onClose={close} wide>

@@ -9,7 +9,7 @@ import { type Stacks, describeChange, record, snapshot } from "./history";
 import { type PlanState, decode, encode } from "./url";
 import type { CellClass } from "../map/colors";
 
-export type Dialog = "export" | "data" | "welcome" | "results" | null;
+export type Dialog = "export" | "data" | "welcome" | "results" | "autopilot" | null;
 
 interface Store extends PlanState {
   index: IndexFile | null;
@@ -49,6 +49,8 @@ interface Store extends PlanState {
   setMinHomes(n: number): void;
   setPins(n: number): void;
   setRadius(mi: number): void;
+  /** set several plan inputs at once as one undo step (Autopilot's "undo all") */
+  applyPlan(snap: PlanState): void;
   hover(cell: number | null): void;
   select(cell: number | null): void;
   focusPin(rank: number | null): void;
@@ -275,6 +277,10 @@ export const useStore = create<Store>((set, get) => {
     },
     setRadius(radiusMi) {
       recompute({ radiusMi, focusedPin: null });
+    },
+    applyPlan(snap) {
+      if (snap.metroId !== get().metroId) return;
+      recompute({ profileId: snap.profileId, weights: { ...snap.weights }, minHomes: snap.minHomes, pins: snap.pins, radiusMi: snap.radiusMi, focusedPin: null, selected: null });
     },
     hover(hovered) {
       if (get().hovered !== hovered) set({ hovered });

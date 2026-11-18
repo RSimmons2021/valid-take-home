@@ -19,6 +19,11 @@ export default defineConfig({
     viewport: { width: 1440, height: 900 },
     trace: "retain-on-failure",
   },
+  projects: [
+    { name: "app", testIgnore: /autopilot/ },
+    // Autopilot draws a second map and encodes video: run it alone, after the rest.
+    { name: "autopilot", testMatch: /autopilot/, dependencies: ["app"] },
+  ],
   webServer: {
     command: "npx vite preview --port 4174 --strictPort",
     url: "http://localhost:4174",

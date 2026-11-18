@@ -55,6 +55,7 @@ export function App() {
         const pins = s.plan?.pins ?? [];
         e.preventDefault();
         if (short === "export") s.open("export");
+        else if (short === "autopilot") s.open("autopilot");
         else if (short === "fit") s.requestFrame();
         else if (short === "view3d") s.setView3d(!s.view3d);
         else if (pins.length) {

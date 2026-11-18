@@ -5,6 +5,7 @@ import { BRIEF_MAX } from "./limits";
 import { usageLine } from "./client";
 import { Bone, StagedProgress } from "../ui/Progress";
 import { AutoHeight } from "../ui/motion";
+import { useAutopilot } from "../autopilot/store";
 import { useAi } from "./store";
 
 const EXAMPLES = [
@@ -93,6 +94,23 @@ export function BriefBox() {
               </button>
             ))}
           </div>
+        )}
+
+        {ai.brief.trim().length >= 8 && ai.briefStatus === "idle" && !res && (
+          <p className="brief__autopilot appear">
+            Or{" "}
+            <button
+              type="button"
+              className="link"
+              onClick={() => {
+                useAutopilot.getState().setBrief(ai.brief);
+                useStore.getState().open("autopilot");
+              }}
+            >
+              let Autopilot build the whole campaign
+            </button>
+            : pins, budget, a script and video for every pin.
+          </p>
         )}
 
         {loading && (

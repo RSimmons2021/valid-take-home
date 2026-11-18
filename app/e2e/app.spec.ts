@@ -1,27 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
-import { type Page, expect, test } from "@playwright/test";
-
-const PLAN = "/#/sf-bay?p=home-repair&w=home_retail.1,home_trades.-1,homes.1,moving.1,nightlife.-1,single.2&n=8&r=1.5&min=25";
-
-/** Block third-party requests (tiles, glyphs) so tests are deterministic and offline-safe. */
-async function offlineExtras(page: Page) {
-  await page.route(/^https?:\/\/(?!localhost)/, (route) => route.abort());
-}
-
-/** Open a plan as a returning visitor (welcome and tour already seen). */
-async function openPlan(page: Page, url = PLAN) {
-  await offlineExtras(page);
-  await page.addInitScript(() => {
-    localStorage.setItem("catchment.welcomed", "1");
-    localStorage.setItem("catchment.toured", "1");
-  });
-  await page.goto(url);
-  await expect(page.locator(".pinrow").first()).toBeVisible({ timeout: 20_000 });
-  // Dismiss guidance if a build shows it anyway.
-  for (let i = 0; i < 2; i++) {
-    if (await page.locator("dialog[open], .tour__note").count()) await page.keyboard.press("Escape");
-  }
-}
+import { expect, test } from "@playwright/test";
+import { offlineExtras, openPlan } from "./helpers";
 
 test("a first-time visitor is welcomed and walked through the app", async ({ page }) => {
   await offlineExtras(page);

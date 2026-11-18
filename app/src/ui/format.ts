@@ -9,8 +9,8 @@ export function compact(v: number): string {
 
 export const pct = (v: number, digits = 0) => `${(v * 100).toFixed(digits)}%`;
 
-export function download(name: string, text: string, type = "text/plain") {
-  const url = URL.createObjectURL(new Blob([text], { type }));
+export function download(name: string, text: string | Blob, type = "text/plain") {
+  const url = URL.createObjectURL(typeof text === "string" ? new Blob([text], { type }) : text);
   const a = document.createElement("a");
   a.href = url;
   a.download = name;

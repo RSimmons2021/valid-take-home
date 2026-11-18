@@ -11,6 +11,7 @@ export const KEYS = {
   redo: `⇧${MOD}Z`,
   print: `${MOD}P`,
   export: "E",
+  autopilot: "A",
   fit: "F",
   view3d: "3",
   prevPin: "[",
@@ -24,9 +25,11 @@ export function singleKey(e: KeyboardEvent): ShortcutId | null {
   if (e.metaKey || e.ctrlKey || e.altKey) return null;
   const t = e.target as HTMLElement | null;
   if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return null;
-  if (document.querySelector("dialog[open], .palette, .tour__note")) return null;
+  // a dialog on its way out (its 150 ms exit) no longer blocks shortcuts
+  if (document.querySelector("dialog[open]:not([data-closing]), .palette, .tour__note")) return null;
   const k = e.key.toLowerCase();
   if (k === "e") return "export";
+  if (k === "a") return "autopilot";
   if (k === "f") return "fit";
   if (k === "3") return "view3d";
   if (k === "[") return "prevPin";

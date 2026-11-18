@@ -68,6 +68,14 @@ export function CommandPalette() {
 
   const commands = useMemo<Command[]>(() => {
     const c: Command[] = [
+      {
+        id: "autopilot",
+        group: "Actions",
+        label: "Build my campaign (Autopilot)",
+        hint: "Weights, pins, budget, scripts, videos, lift test",
+        keys: KEYS.autopilot,
+        run: () => s.open("autopilot"),
+      },
       { id: "export", group: "Actions", label: "Export plan", hint: "ZIPs, radius pins, lift test, files", keys: KEYS.export, run: () => s.open("export") },
       { id: "results", group: "Actions", label: "Learn from results", hint: "Calibrate weights from campaign data", run: () => s.open("results") },
       { id: "copy", group: "Actions", label: "Copy link to this plan", run: async () => toast((await copy((await shareLink()).url)) ? "Link copied" : "Couldn't copy") },
