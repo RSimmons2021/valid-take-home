@@ -180,3 +180,20 @@ Radar's literal cursor lens was left out, because on a planning tool hiding part
 
 **Decision.** `--blue` for fills, `--blue-text` for text (`#8a92ff` in dark, at least 5.8:1). `--muted` is darkened to `#63666d`.
 **Why.** The brand blue on near-black was 3.65:1. Lightening `--blue` itself would have broken white-on-blue buttons.
+
+### 32. Markers are an anchor and a pin, keyed by cell
+
+**Context.** Pins drifted below their circles, worse for higher ranks, and trailed the map while panning.
+**Cause.** `.pin { position: relative }` (added for the pulse ring) overrode MapLibre's `position: absolute`, so markers stacked in page flow, and a `transform` transition fought MapLibre's positioning transform.
+**Decision.** MapLibre gets an outer anchor it owns completely; the inner button carries every animation. Markers are keyed by cell and updated in place. An e2e test asserts every anchor is absolutely positioned.
+
+### 33. One extra map colour, with a reason behind it
+
+**Decision.** Below-median cells whose main drag is an avoided signal get a coral wash; hovering one names the signal. Pin reach gets a legend entry. The legend's entries spotlight their class.
+**Why.** "Low" was ambiguous: no customers, or something the user doesn't want nearby (bars, competitors)? That's the difference between "skip it" and "skip it because of X". Only one new hue was added, and it's always lighter than fit, so "darker blue = better" still holds.
+**Rejected.** Highlighting strong cells outside the pins: hundreds of outlined hexes was noise, and the pin list already says where reach stops.
+
+### 34. Motion is chosen by frequency
+
+**Decision.** There is one set of easing and duration tokens. The palette opens instantly; warm tooltips skip their fade; exits are faster than entrances; reduced motion keeps fades and drops travel and loops.
+**Why.** Animation on something used a hundred times a day is latency. The old reduced-motion rule (every duration set to 0.01 ms) also removed the fades that explain state changes.

@@ -59,6 +59,8 @@ Run the checks for whichever side you touched before finishing. CI runs all of t
 - DuckDB 2.0: `con.sql(q).fetchall()` (relations don't keep results), and `geometry_always_xy` must be set (`db.connect()` does it).
 - deck.gl layers accept `beforeId` at runtime but not in their types. Use the `UNDER_BUILDINGS` spread in `MapView.tsx`.
 - Overture quirks are documented in `docs/data-pipeline.md` §6. Read that before "fixing" cleaning or labelling logic.
+- Map pins: MapLibre owns `.pin-anchor`'s `position` and `transform`. Style and animate the inner `.pin` only, or pins drift off their circles.
+- Motion uses the tokens in `styles.css` (`--ease-out`, `--fast`…). Don't hand-type new curves.
 - The tour's `before()` hooks change app state (selecting a cell, re-framing). Keep their selectors valid when you restructure the UI.
 
 ## Commit style

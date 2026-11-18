@@ -84,6 +84,20 @@ All access is wrapped in try/catch. With storage blocked, the app behaves like a
 7. `selected` cell outline (deck)
 8. Pin markers (HTML elements, so they use the interface font and CSS animation)
 
+**Pin markers.** Each marker is two elements. MapLibre owns the outer `.pin-anchor`: it is `position: absolute` and its `transform` is the pin's place on the map. Every animation and hover state lives on the inner `.pin` button. Never style the anchor's `position` or `transform`: that is how pins once drifted off their circles (a `position: relative` made them stack in page flow, and a transform transition made them trail the map while panning). Markers are keyed by cell, so a replan updates them in place: only new pins land, and pins that leave shrink out. MapLibre's own `role="button"` on the anchor is removed so the pin isn't a button inside a button.
+
+**What the colours mean.** Few enough to read at a glance, each in both palettes (`colors.ts`):
+
+| Colour | Meaning |
+| --- | --- |
+| Blue ramp | Above the median; darker is a better fit |
+| Neutral wash | Below the median |
+| Coral wash | Below the median *mainly because of something you avoid* (`heldBack()` in `model/score.ts`: an avoided factor is the biggest drag and the cell is clearly high on it). Hovering such a block says which signal. Shown only when something is avoided; never darker than a fit cell. |
+| Cyan circle | A pin's reach; brighter when the pin is focused or hovered |
+| Unshaded | Fewer homes than the floor, so not scored |
+
+The legend entries are keys: hover or focus one to spotlight that kind of block (the rest dims in 160 ms), click to keep it on. Pin rows and markers light up together (`hotPin` in the store).
+
 `beforeId` works at runtime in deck.gl's interleaved mode but isn't in the layer prop types, hence the `UNDER_BUILDINGS` spread.
 
 **Camera.**
@@ -94,7 +108,16 @@ All access is wrapped in try/catch. With storage blocked, the app behaves like a
 
 **3D.** The cells are extruded by `homes × 2.6 m`, the camera pitches to 52°, and basemap buildings are hidden (the cells stand in for them).
 
-**Motion.** Cell colours transition over 450 ms and pin radii over 500 ms. Pins new to the plan drop in with a staggered delay and one cyan pulse, and the focused pin keeps pulsing. Under `prefers-reduced-motion` all durations are 0 and CSS animations are disabled.
+**Motion.** Cell colours morph over 450 ms when scores change (160 ms for a legend spotlight) and pin radii over 320 ms. New pins land with a 45 ms stagger, a light overshoot and one cyan pulse. A focused pin pulses twice and then keeps a steady halo, because an endless pulse beside a map you're reading is a distraction.
+
+## Motion vocabulary (`styles.css` tokens)
+
+- `--ease-out` `cubic-bezier(0.23, 1, 0.32, 1)` for anything entering or responding. `--ease-in-out` `cubic-bezier(0.77, 0, 0.175, 1)` for things moving on screen (the tour spotlight, list reorders). `--ease-land` (a light overshoot) only for pins landing. `--ease-pen` for the tour's hand-drawn strokes.
+- Durations: `--press` 140 ms, `--fast` 180 ms, `--base` 240 ms. UI motion stays under 300 ms. The only longer moves are the camera and the tour's drawing.
+- **Frequency decides.** The ⌘K palette opens with no animation (it's used constantly, from the keyboard). After one tooltip has shown, the next appears without a fade. Exits are faster than entrances: modals sink out in 150 ms, toasts fade in 200 ms.
+- **Press feedback is one gesture.** `scale(0.97)` on buttons, chips and cards; pins dip to 0.94. Hover transforms are gated to `(hover: hover) and (pointer: fine)`, so taps don't leave them stuck.
+- Only `transform` and `opacity` animate. The "on target" bar is a `scaleX`, not a width.
+- **Reduced motion means fewer, not none.** Entrance keyframes are redefined as plain fades, and travel, scaling and endless loops (pulses, the live dot, shimmer) stop. Colour changes stay, because they explain state. In JS, camera moves and deck transitions drop to 0 ms.
 
 ## Theming
 
@@ -157,6 +180,7 @@ See [ai.md](ai.md) for the server side.
   - Same-kind changes within 600 ms coalesce, and undo crosses metro switches.
   - A toast names what changed.
   - The shortcuts are ignored while typing in a text field.
+- **Single-key shortcuts** (`ui/shortcuts.ts`): `E` export, `F` fit all pins, `3` 2D/3D, `[` and `]` previous and next pin. They're ignored while typing, with a modifier held, or with a dialog, the palette or the tour open. One table feeds the key handler, the palette's keycaps and the tooltips (`data-keys`), so what the UI teaches is what the keys do.
 - **Motion that explains change.** Stats roll to new values with tabular figures, and the pin list animates reorders (FLIP, keyed by cell). A polite live region announces "Plan updated: N pins, X homes, Y% on target" after edits settle.
 
 ## Hand-offs
