@@ -203,3 +203,25 @@ Radar's literal cursor lens was left out, because on a planning tool hiding part
 **Decision.** Metro loads report streamed bytes against the known file size. AI calls show their real server stages and elapsed time, with a final stage that only completes when the answer arrives.
 **Rejected.** A percentage bar for AI calls. A timer-driven percentage would invent precision the app doesn't have, and stall or jump at 90%. Stages plus seconds tell the truth and still show movement.
 **Detail.** Loading UI waits 150 ms before appearing, so fast (cached) work never flickers.
+
+### 36. Autopilot runs the app, it doesn't replace it
+
+**Decision.** Autopilot performs the same actions a person would, through the store, with each step visible on the map and recorded in undo history, and ends in a kit to review. It never launches or spends.
+**Why.** "Agents propose, people approve", as in Growth Lab. A one-click result you can inspect and undo is more useful than a black box. Applying AI weights without a separate review step is acceptable here only because the run is user-initiated, the reasons are shown, and the whole run undoes in one step.
+**Rejected.** Pushing campaigns to Meta or Google (needs OAuth into someone's ad account), and spending to a cap (a take-home has no business holding anyone's money).
+
+### 37. Videos are drawn, not generated
+
+**Decision.** Each pin's video is a deterministic canvas film of the real map, encoded in the browser.
+**Why.** It's free per video, fast (eight films in seconds), reproducible, and it shows the actual neighbourhood. A video model would cost money per video and take minutes. It would also hallucinate signage, which is exactly what the angles' `scene` lint exists to prevent. Growth Lab's code films use the same approach.
+**Cost.** The films are motion graphics, not live action. The `scene` prompts remain for teams that want generated B-roll.
+
+### 38. Budget floor before proportion
+
+**Decision.** Pins are capped so each can get $5 a day; each gets that floor, then the rest goes by well-matched homes reached.
+**Why.** A purely proportional split gave a small pin $2 a day: too thin for an ad set to learn, and contrary to the hint that set the pin count.
+
+### 39. E2E tests block the API
+
+**Decision.** Every e2e test aborts `/api/*`, and the Autopilot flow runs alone after the others.
+**Why.** `vite preview` proxies `/api` to a local AI server if one is running, so tests silently depended on the developer's machine (and spent money). Autopilot's second WebGL map and video encode also starved parallel tests on a software renderer.

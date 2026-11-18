@@ -54,6 +54,19 @@ CI (`.github/workflows/ci.yml`) runs exactly these checks on every push and PR: 
 
 The server sets cache headers itself: `/assets/*` immutable, `/data/*` for an hour, the page always revalidated. It also gzips text responses.
 
+### Vercel front end, Render API
+
+`app/vercel.json` builds the static site on Vercel and **rewrites `/api/*` and `/s` to the Render service**, so the browser only ever talks to one origin: no CORS, and the AI key stays on Render.
+
+1. Deploy the Render service from `render.yaml` and set `OPENAI_API_KEY` in its dashboard.
+2. If Render gives the service a URL other than `https://catchment.onrender.com`, change the two `destination`s in `app/vercel.json`.
+3. Import the repo on Vercel with **Root Directory `app`**. No environment variables are needed there.
+
+Notes:
+- The server builds share-page URLs from `X-Forwarded-Host`, so previews point at the Vercel domain.
+- Rate limits use the first `X-Forwarded-For` address, which is the visitor.
+- Render's free tier sleeps when idle. The app's health check keeps retrying for about a minute, and the AI controls appear once the server wakes.
+
 **Static hosting still works** (`app/dist` on any static host). The AI health check fails, the AI controls hide, and everything else behaves the same.
 
 ## Testing first-visit behaviour

@@ -23,6 +23,9 @@ Catchment is a geo-targeting planner for local-service ads, built on Overture Ma
 | AI client, store, brief box | `app/src/ai/` |
 | Calibration, lift test, release changes, creative brief | `app/src/model/` (`calibrate`, `holdout`, `changes`, `brief`), see `docs/measurement.md` |
 | MCP server | `app/mcp/` (see `docs/mcp.md`) |
+| Autopilot run and kit | `app/src/autopilot/`, `app/src/model/campaign.ts` (budget, scripts, kit) |
+| Pin videos (draw, photograph, encode) | `app/src/video/` (see `docs/frontend.md`) |
+| Deploy (Render API, Vercel front end) | `render.yaml`, `app/vercel.json`, `docs/development.md` |
 | E2E + accessibility | `app/e2e/` (`npm run e2e` after `npm run build`) |
 | Why something is the way it is | `docs/decisions.md` |
 
@@ -59,6 +62,8 @@ Run the checks for whichever side you touched before finishing. CI runs all of t
 - DuckDB 2.0: `con.sql(q).fetchall()` (relations don't keep results), and `geometry_always_xy` must be set (`db.connect()` does it).
 - deck.gl layers accept `beforeId` at runtime but not in their types. Use the `UNDER_BUILDINGS` spread in `MapView.tsx`.
 - Overture quirks are documented in `docs/data-pipeline.md` §6. Read that before "fixing" cleaning or labelling logic.
+- Films are pure functions of time (`drawFrame`). Keep them deterministic: seeded randomness only, and no network calls while drawing. Callouts must come from verified places, never from free text.
+- E2E tests block `/api`. Don't write a test that needs the AI server, and keep the heavy Autopilot flow in `e2e/autopilot.spec.ts` (its own project, run last).
 - Map pins: MapLibre owns `.pin-anchor`'s `position` and `transform`. Style and animate the inner `.pin` only, or pins drift off their circles.
 - Motion uses the tokens in `styles.css` (`--ease-out`, `--fast`…). Don't hand-type new curves.
 - The tour's `before()` hooks change app state (selecting a cell, re-framing). Keep their selectors valid when you restructure the UI.

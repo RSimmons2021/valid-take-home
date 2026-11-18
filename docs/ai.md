@@ -68,6 +68,8 @@ Grounding is enforced three times, so copy can't invent places:
 
    Dropped drafts are counted and their reasons shown in the UI ("1 draft rejected" with a tooltip). They are never silently fixed.
 
+**On-screen titles.** Each angle also has a `title`: the same idea cut down for a silent vertical video, at most 8 words and 48 characters, readable in two seconds with the sound off. `verifyAngles` rejects a longer one ("title too long for a silent video") and lints it like the rest of the copy. Autopilot's videos use it; replies cached before the field existed fall back to the headline clipped to 8 words.
+
 **Video scene prompts.** Each angle also carries a `scene`: a 9:16, ~5-second prompt for AI video tools (Kling, Seedance) describing the kind of place, the neighbourhood's look, the service, the light and the camera move. Scenes must never name a real place, because video models render names as fake signage and trademarks. `verifyAngles` rejects any angle whose scene mentions a grounded place, and counts it.
 
 **Creative brief.** The pin card's *Copy brief / Brief .md* assembles a Markdown hand-off (`src/model/brief.ts`, pure and tested): the audience, verified local references with GERS ids, the angles with scenes, craft notes (hook in 2 s, captions on, the personal-attributes rule), a don't-mention list from avoided signals, and the changes since the last release.
@@ -77,6 +79,19 @@ The prompt asks for performance-creative hooks: a hook a scroller gets in two se
 **Regenerate** bumps an `attempt` number. The model doesn't see it, but it changes the cache key, so you get fresh copy. Angles are cached per pin + radius + weights in the browser, so changing targeting never shows stale copy.
 
 Live measurement: about 1,000 input and 170 output tokens, about 5 s, about $0.002 per pin.
+
+## Autopilot
+
+Autopilot (`src/autopilot/`) calls the same two routes: the brief once, then angles for each pin, two at a time. It adds no AI route and no new kind of output. The model's words go into each pin's script (title, hook, cited places). The budget, the pin count, the cited places' positions and every pixel of the video are computed in the browser. Without AI, every script comes from the data (`scriptFor` in `model/campaign.ts`), naming the nearest verified places for the user's signals and skipping listings that look like a person ("…, MD").
+
+A full run costs about $0.02 (one brief plus eight pins of angles) and takes about a minute, mostly the model. Rerunning hits the server's response cache.
+
+**Why the videos aren't AI-generated.** They're drawn in code (`src/video/film.ts`), not made with a video model:
+- They cost nothing per video, render a set of eight in seconds, and come out identical for the same plan.
+- They show the real neighbourhood.
+- They can't invent signage, places or people.
+
+The text model does the part it's good at: the words. The `scene` prompts remain for teams that want a generated B-roll shot.
 
 ## Guards
 

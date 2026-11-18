@@ -21,6 +21,21 @@ First-time visitors get a welcome card, then a guided tour drawn in hand-written
 3. **Plan.** Choose the number of pins and a radius (1 mile minimum, Meta's smallest). Pins are placed where they add the most well-fit homes not already reached. The panel reports reach, **on-target share** (how much of what you'd pay for actually fits) and **capture** (how much of the city's fit you'd reach).
 4. **Export.** ZIP list (with how much of each ZIP the pins really cover), Google's bulk radius lines, a pins CSV, or GeoJSON. The URL is the plan: copy the link and it rebuilds exactly.
 
+## Autopilot: the whole campaign from one sentence
+
+Press **✦ Autopilot** (or `A`), describe the business, give a monthly budget, and it runs the steps a media buyer and a creative team would, live on the map:
+
+1. **Understand the business:** the brief becomes weights, each with a reason.
+2. **Place the pins:** as many as the budget can feed at $5 a day or more.
+3. **Split the budget:** a floor per pin, then the rest by the well-matched homes each one reaches.
+4. **Write a script per pin:** an on-screen title that passes the sound-off test (8 words or fewer), a hook and a close, citing only verified places inside the pin.
+5. **Make each pin's video:** 8 s, 9:16, drawn in the browser from the pin's real map, its blocks coloured by fit, a hand-drawn ring and arrows to the real places it names. Exported as MP4 (H.264), at no per-video cost, and the same plan always makes the same film.
+6. **Design the lift test:** matched ZIP pairs, as in Export.
+
+It ends in a **campaign kit**: a video player and download per pin, each pin's script and budget, a kit `.md` that labels every number *verified*, *estimated* or *unknown*, and **Undo Autopilot**, which puts the plan back in one step. Nothing is launched or spent. Close the dialog and it keeps working, with a pill in the top bar.
+
+The AI writes words only. Scores, pins, money and pictures come from the deterministic engine, and without an AI key Autopilot still runs: scripts come from the data, naming real places, never people.
+
 ## Closing the loop: plan → run → measure → better plan
 
 A map that says where to spend is half a tool. The rest is what an agency does next:
@@ -110,7 +125,7 @@ npm run e2e                               # Playwright flows + axe audit (light 
 npm run mcp:build                         # MCP server → app/dist-mcp/catchment-mcp.js
 ```
 
-Deploys as one small Node web service (`render.yaml`: `npm start`, with `OPENAI_API_KEY` set in the host's dashboard). Without the server, `app/dist` still works on any static host, minus the AI features.
+Deploy either as one small Node web service (`render.yaml`: `npm start`, with `OPENAI_API_KEY` set in the host's dashboard), or as a static site on Vercel (`app/vercel.json`) that forwards `/api/*` and `/s` to that Render service. Without the server, `app/dist` still works on any static host, minus the AI features. Autopilot and its videos work everywhere: they run in the browser. Details are in [docs/development.md](docs/development.md#deploying).
 
 ## Documentation
 

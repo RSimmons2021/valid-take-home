@@ -186,7 +186,7 @@ See [ai.md](ai.md) for the server side.
   - Same-kind changes within 600 ms coalesce, and undo crosses metro switches.
   - A toast names what changed.
   - The shortcuts are ignored while typing in a text field.
-- **Single-key shortcuts** (`ui/shortcuts.ts`): `E` export, `F` fit all pins, `3` 2D/3D, `[` and `]` previous and next pin. They're ignored while typing, with a modifier held, or with a dialog, the palette or the tour open. One table feeds the key handler, the palette's keycaps and the tooltips (`data-keys`), so what the UI teaches is what the keys do.
+- **Single-key shortcuts** (`ui/shortcuts.ts`): `A` Autopilot, `E` export, `F` fit all pins, `3` 2D/3D, `[` and `]` previous and next pin. They're ignored while typing, with a modifier held, or with a dialog, the palette or the tour open. One table feeds the key handler, the palette's keycaps and the tooltips (`data-keys`), so what the UI teaches is what the keys do.
 - **Motion that explains change.** Stats roll to new values with tabular figures, and the pin list animates reorders (FLIP, keyed by cell). A polite live region announces "Plan updated: N pins, X homes, Y% on target" after edits settle.
 
 ## Hand-offs
@@ -203,6 +203,21 @@ One rule: **measure what can be measured; never fake what can't.**
 - **AI calls** can't report progress, so `StagedProgress` shows the stages the server really runs, the real elapsed seconds, and a skeleton shaped like the answer (weight rows for a brief, three cards for angles). Stages advance on an estimate, but the last never completes by timer: it stays active until the reply lands. Past 1.6× the estimate it says "taking longer than usual". Screen readers hear each stage once. While a brief is read, a light passes along the field and the ✦ twinkles. Cancel stays available.
 - **Copy link** answers on the button itself: "Copying…" while the map snapshot uploads, then "Copied" with a drawn check for 1.8 s. The three labels share one grid cell, so the width never changes. Only a failure raises a toast.
 - Under reduced motion, sweeps, shimmer and pulses stop; progress values and stage changes still show.
+
+## Autopilot and videos
+
+- **`autopilot/store.ts`** runs the steps through the app's own actions (`setWeights` via the AI store's apply, `setPins`, the model functions), so the map updates as each step lands and every change is in undo history. `before` snapshots the plan, and **Undo Autopilot** restores it as one step (`applyPlan`). A run ticket makes Stop and reruns safe. If the dialog is closed mid-run, `AutopilotPill` in the top bar shows progress and reopens it.
+- **`autopilot/AutopilotPanel.tsx`** has three views: ask (brief and budget), run (real steps with real details), and kit (a video, script and budget per pin, and downloads).
+- **`video/stills.ts`** photographs each pin with a hidden second MapLibre map: 720×1280, pixel ratio 1, always the light palette, so a film doesn't depend on the viewer's theme. It projects the pin's scored blocks and the script's places while that map is framed, so they line up exactly.
+- **`video/film.ts`** is `drawFrame(ctx, t, spec)`, a pure function of time. Over 8 s:
+  - the map settles from a slow push-in;
+  - blocks colour in from the centre;
+  - a hand-drawn ring circles the reach;
+  - arrows and handwritten labels point at up to three real places, in non-overlapping slots, with ellipses rather than squashed text;
+  - a close card (business, area, homes in reach, a call to action) slides up.
+
+  The title card is readable by 0.6 s. Strokes use seeded randomness, and the attribution is on every frame.
+- **`video/FilmPlayer.tsx`** previews by drawing frames live: no file needed, and only the playing film animates. **`video/encode.ts`** encodes the same frames with WebCodecs through Mediabunny, faster than real time: MP4 and H.264, or WebM and VP9 where the browser can't encode H.264. Mediabunny is loaded only on download.
 
 ## Edge states
 
