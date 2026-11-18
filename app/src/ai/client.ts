@@ -26,6 +26,8 @@ export interface Angle {
   angle: string;
   headline: string;
   body: string;
+  /** prompt for an AI video model: 9:16, no place names or signage */
+  scene: string;
   cites: { id: string; name: string; kind: string }[];
 }
 

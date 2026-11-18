@@ -1,9 +1,10 @@
 import { usageLine } from "../ai/client";
 import { currentBusiness, pinKey, useAi } from "../ai/store";
+import { creativeBrief } from "../model/brief";
 import { type ChangedPlace, pinChanges, releaseLabel } from "../model/changes";
 import { pinName } from "../model/export";
 import { useStore } from "../state/store";
-import { compact, copy, pct } from "./format";
+import { compact, copy, download, pct, slug } from "./format";
 import { toast } from "./toast";
 
 /**
@@ -131,6 +132,12 @@ export function PinCard() {
                     <span className="angle__type">{a.angle}</span>
                     <p className="angle__headline">{a.headline}</p>
                     <p className="angle__body">{a.body}</p>
+                    {a.scene && (
+                      <details className="angle__scene">
+                        <summary data-tip="A prompt for AI video tools: vertical 9:16, about 5 seconds, no names or signage">Scene prompt</summary>
+                        <p>{a.scene}</p>
+                      </details>
+                    )}
                     <div className="angle__foot">
                       <span className="angle__cites">
                         {a.cites.map((c) => (
@@ -163,6 +170,35 @@ export function PinCard() {
             </>
           )}
         </section>
+      )}
+      {metro && (
+        <div className="pincard__brief">
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            data-tip="Audience, verified local references, angles, video scene prompts and do/don't notes for the creative team"
+            onClick={async () => {
+              const md = creativeBrief({ metro, pin, weights, business, angles: data?.angles, link: location.href, date: new Date() });
+              toast((await copy(md)) ? "Creative brief copied (Markdown)" : "Couldn't copy");
+            }}
+          >
+            Copy brief
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() =>
+              download(
+                `catchment-brief-${slug(business.name)}-${slug(pinName(pin.label, pin.rank))}.md`,
+                creativeBrief({ metro, pin, weights, business, angles: data?.angles, link: location.href, date: new Date() }),
+                "text/markdown",
+              )
+            }
+          >
+            Brief .md ↓
+          </button>
+          {!data && ai.available && <span className="hint">Write angles first to include them.</span>}
+        </div>
       )}
     </aside>
   );

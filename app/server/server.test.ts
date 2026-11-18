@@ -104,7 +104,13 @@ describe("pin grounding context", () => {
 describe("angle verification", () => {
   const places = pinContext(METRO, { lat: 37.7502, lon: -122.4337, radiusMi: 1, weights: { pet_life: 2 } });
   const ref = (name: string) => places.find((p) => p.name === name)!.ref;
-  const a = (headline: string, body: string, cites: string[]) => ({ angle: "Test", headline, body, cites });
+  const a = (headline: string, body: string, cites: string[], scene = "Golden-hour pan across a leafy dog park, a groomer's van pulls up") => ({
+    angle: "Test",
+    headline,
+    body,
+    cites,
+    scene,
+  });
 
   it("keeps grounded angles and reports why others were dropped", () => {
     const raw: RawAngles = {
@@ -119,6 +125,11 @@ describe("angle verification", () => {
     expect(angles).toHaveLength(1);
     expect(angles[0].cites[0]).toMatchObject({ id: "g1", name: "Upper Douglass Dog Park" });
     expect(rejected).toEqual(["cited a place it doesn't name", "addresses the reader's personal traits", "contains emoji"]);
+  });
+
+  it("rejects a video scene that names a real place (video models render names as fake signage)", () => {
+    const raw: RawAngles = { angles: [a("Seven Hills Vet regulars", "We come to you.", [ref("Seven Hills Vet")], "Slow push-in on the Seven Hills Vet sign at dusk")] };
+    expect(verifyAngles(raw, places).rejected).toEqual(["scene names a real place"]);
   });
 
   it("rejects copy over the length limits", () => {
