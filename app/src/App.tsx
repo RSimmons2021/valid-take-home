@@ -10,6 +10,7 @@ import { CommandPalette, undoToast } from "./ui/CommandPalette";
 import { Dialogs } from "./ui/Dialogs";
 import { PinCard } from "./ui/PinCard";
 import { PrintPlan } from "./ui/PrintPlan";
+import { DocumentTitle, OfflineBanner } from "./ui/edges";
 import { PlanPanel } from "./ui/PlanPanel";
 import { TooltipLayer } from "./ui/Tooltip";
 import { TopBar } from "./ui/TopBar";
@@ -79,6 +80,8 @@ export function App() {
       <Tour />
       <CommandPalette />
       <PrintPlan />
+      <DocumentTitle />
+      <OfflineBanner />
       <PlanAnnouncer />
       <TooltipLayer />
       <Toasts />
