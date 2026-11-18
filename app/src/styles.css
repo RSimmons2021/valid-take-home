@@ -672,6 +672,7 @@ p {
   font-variant-numeric: tabular-nums;
 }
 .segmented {
+  position: relative;
   display: inline-flex;
   padding: 2px;
   border-radius: 9px;
@@ -690,10 +691,32 @@ p {
   font-size: 10px;
   color: var(--muted);
 }
+.segmented button {
+  position: relative;
+  z-index: 1;
+  transition: color var(--fast) var(--ease-out);
+}
 .segmented button[aria-checked="true"] {
-  background: var(--card);
   color: var(--ink);
+}
+/* the raised "selected" surface is one element that slides between options (useIndicator) */
+.segmented__thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 0;
+  width: var(--ind-w, 0);
+  transform: translateX(var(--ind-x, 0));
+  opacity: var(--ind-o, 0);
+  border-radius: 7px;
+  background: var(--card);
   box-shadow: 0 1px 2px rgba(5, 6, 8, 0.12), 0 0 0 1px var(--line-2);
+}
+[data-ind="live"] > .segmented__thumb,
+[data-ind="live"] > .tabs__ink {
+  transition:
+    transform var(--base) var(--ease-out),
+    width var(--base) var(--ease-out);
 }
 .segmented--small button {
   height: 26px;
@@ -1125,6 +1148,7 @@ p {
   color: var(--muted);
 }
 .tabs {
+  position: relative;
   margin-top: 20px;
   display: flex;
   gap: 4px;
@@ -1138,6 +1162,7 @@ p {
   padding: 8px 12px 10px;
   margin-bottom: -1px;
   border-bottom: 2px solid transparent;
+  transition: color var(--fast) var(--ease-out);
   font-size: 13.5px;
   font-weight: 500;
   color: var(--ink-2);
@@ -1148,7 +1173,17 @@ p {
 }
 .tabs button[aria-selected="true"] {
   color: var(--ink);
-  border-bottom-color: var(--blue);
+}
+.tabs__ink {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  width: var(--ind-w, 0);
+  transform: translateX(var(--ind-x, 0));
+  opacity: var(--ind-o, 0);
+  border-radius: 2px;
+  background: var(--blue);
 }
 .export {
   margin-top: 18px;
@@ -1163,6 +1198,9 @@ p {
   display: grid;
   align-content: start;
   gap: 12px;
+}
+.export__side .segmented {
+  justify-self: start;
 }
 .export__actions {
   display: flex;
@@ -1219,6 +1257,12 @@ p {
   padding: 6px 10px;
   border-bottom: 1px solid var(--line-2);
   color: var(--ink);
+}
+.ziptable td {
+  transition: color var(--fast) var(--ease-out);
+}
+.minibar i {
+  transition: background-color var(--fast) var(--ease-out);
 }
 .ziptable tr[data-out] td {
   color: var(--muted);
@@ -3407,5 +3451,79 @@ dt[data-tip] {
   }
   .copylink__label {
     transform: none !important;
+  }
+}
+
+/* ---------- content transitions (ui/motion.tsx) ----------
+   Swapped content fades in (sliding a few px toward where it came from), heights follow
+   their content, and lists glide. All of it is under 250 ms and none of it blocks input. */
+.autoheight__inner {
+  display: flow-root; /* keep children's margins inside, so the measured height is the real one */
+}
+.swap {
+  animation: swap-in 200ms var(--ease-out);
+}
+.swap[data-dir="next"] {
+  animation-name: swap-in-next;
+}
+.swap[data-dir="prev"] {
+  animation-name: swap-in-prev;
+}
+@keyframes swap-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+@keyframes swap-in-next {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+@keyframes swap-in-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+/* a reshuffle re-deals the numbers */
+.redeal td {
+  animation: fade-in var(--base) var(--ease-out);
+}
+/* an example dropped into the brief: a brief wash so the eye lands on the text */
+.brief__flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--blue-wash);
+  animation: fade-out 700ms var(--ease-out) forwards;
+}
+/* small things that come and go: a "Reset to…" link, a legend key, a results step */
+.appear,
+.legend__key,
+.results {
+  animation: fade-in var(--fast) var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes swap-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes swap-in-next {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes swap-in-prev {
+    from {
+      opacity: 0;
+    }
+  }
+  [data-ind="live"] > .segmented__thumb,
+  [data-ind="live"] > .tabs__ink {
+    transition: none;
   }
 }

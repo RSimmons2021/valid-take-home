@@ -11,6 +11,7 @@ import { Dialogs } from "./ui/Dialogs";
 import { PinCard } from "./ui/PinCard";
 import { PrintPlan } from "./ui/PrintPlan";
 import { LoadBar, loadLabel } from "./ui/Progress";
+import { Indicator } from "./ui/motion";
 import { Glyph } from "./ui/TopBar";
 import { DocumentTitle, OfflineBanner } from "./ui/edges";
 import { PlanPanel } from "./ui/PlanPanel";
@@ -156,8 +157,14 @@ function Legend() {
   });
   return (
     <div className="legend">
-      <button type="button" className="legend__item legend__key" data-tip="Blocks below the city median for your customer. Pins ignore them. Click to spotlight." {...peekable("low")}>
-        <i className="legend__chip" style={{ background: css(palette.low), boxShadow: "inset 0 0 0 1px var(--line)" }} aria-hidden="true" /> Below average
+      <button
+        type="button"
+        className="legend__item legend__key"
+        data-tip="Blocks below the city median for your customer. Pins ignore them. Click to spotlight."
+        {...peekable("low")}
+      >
+        <i className="legend__chip" style={{ background: css(palette.low), boxShadow: "inset 0 0 0 1px var(--line)" }} aria-hidden="true" />{" "}
+        Below average
       </button>
       {avoids && (
         <button
@@ -166,18 +173,37 @@ function Legend() {
           data-tip="Below average mainly because of something you chose to avoid nearby. Hover a block to see what. Click to spotlight."
           {...peekable("held")}
         >
-          <i className="legend__chip" style={{ background: css([palette.held[0], palette.held[1], palette.held[2], Math.min(255, palette.held[3] * 2.4)]) }} aria-hidden="true" /> Avoided nearby
+          <i
+            className="legend__chip"
+            style={{ background: css([palette.held[0], palette.held[1], palette.held[2], Math.min(255, palette.held[3] * 2.4)]) }}
+            aria-hidden="true"
+          />{" "}
+          Avoided nearby
         </button>
       )}
-      <button type="button" className="legend__ramp legend__key" data-tip="Darker blue means a better fit for your customer. Click to spotlight." {...peekable("fit")}>
+      <button
+        type="button"
+        className="legend__ramp legend__key"
+        data-tip="Darker blue means a better fit for your customer. Click to spotlight."
+        {...peekable("fit")}
+      >
         <span>Good</span>
         <i style={{ background: rampCss(palette) }} aria-hidden="true" />
         <span>Best fit</span>
       </button>
-      <button type="button" className="legend__item legend__key" data-tip="What your pins reach. Click to spotlight." {...peekable("reach")}>
+      <button
+        type="button"
+        className="legend__item legend__key"
+        data-tip="What your pins reach. Click to spotlight."
+        {...peekable("reach")}
+      >
         <i className="legend__ring" aria-hidden="true" /> Pin reach
       </button>
-      <span className="legend__item legend__muted" data-tip={`Blocks with fewer than ${minHomes} homes aren't scored. Raise or lower this floor in the Business panel.`} tabIndex={0}>
+      <span
+        className="legend__item legend__muted"
+        data-tip={`Blocks with fewer than ${minHomes} homes aren't scored. Raise or lower this floor in the Business panel.`}
+        tabIndex={0}
+      >
         Blank: &lt;{minHomes} homes
       </span>
       {lowUnits && (
@@ -195,10 +221,25 @@ function Legend() {
         </span>
       )}
       <span className="segmented segmented--small legend__view" role="radiogroup" aria-label="Map view">
-        <button type="button" role="radio" aria-checked={!view3d} onClick={() => setView3d(false)} data-tip="Flat map" data-keys={KEYS.view3d}>
+        <Indicator value={view3d} />
+        <button
+          type="button"
+          role="radio"
+          aria-checked={!view3d}
+          onClick={() => setView3d(false)}
+          data-tip="Flat map"
+          data-keys={KEYS.view3d}
+        >
           2D
         </button>
-        <button type="button" role="radio" aria-checked={view3d} onClick={() => setView3d(true)} data-tip="Raise each block by its number of homes" data-keys={KEYS.view3d}>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={view3d}
+          onClick={() => setView3d(true)}
+          data-tip="Raise each block by its number of homes"
+          data-keys={KEYS.view3d}
+        >
           3D
         </button>
       </span>

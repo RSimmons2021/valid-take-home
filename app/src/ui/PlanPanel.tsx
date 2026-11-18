@@ -3,7 +3,7 @@ import { pinChanges, releaseLabel } from "../model/changes";
 import { pinName } from "../model/export";
 import { useRef } from "react";
 import { useStore } from "../state/store";
-import { AnimatedNumber, useFlip } from "./motion";
+import { AnimatedNumber, Indicator, useFlip } from "./motion";
 import { KEYS } from "./shortcuts";
 import { compact, int, pct } from "./format";
 
@@ -35,7 +35,13 @@ export function PlanPanel() {
               Pins
             </span>
             <div className="stepper" role="group" aria-labelledby="pins-label">
-              <button type="button" aria-label="Fewer pins" data-tip="Fewer pins" onClick={() => setPins(Math.max(1, pins - 1))} disabled={pins <= 1}>
+              <button
+                type="button"
+                aria-label="Fewer pins"
+                data-tip="Fewer pins"
+                onClick={() => setPins(Math.max(1, pins - 1))}
+                disabled={pins <= 1}
+              >
                 −
               </button>
               <output aria-live="polite">{pins}</output>
@@ -55,6 +61,7 @@ export function PlanPanel() {
               Radius
             </span>
             <div className="segmented" role="radiogroup" aria-labelledby="radius-label">
+              <Indicator value={radiusMi} />
               {RADIUS_OPTIONS_MI.map((r) => (
                 <button
                   key={r}
@@ -143,8 +150,12 @@ export function PlanPanel() {
                         <span
                           className="pinrow__alert"
                           data-tip={`Since ${releaseLabel(ch.since)}: ${[
-                            ch.newCompetitors.length ? `${ch.newCompetitors.length} new listing${ch.newCompetitors.length > 1 ? "s" : ""} you avoid` : "",
-                            ch.lostDemand.length ? `${ch.lostDemand.length} place${ch.lostDemand.length > 1 ? "s" : ""} you prefer marked closed` : "",
+                            ch.newCompetitors.length
+                              ? `${ch.newCompetitors.length} new listing${ch.newCompetitors.length > 1 ? "s" : ""} you avoid`
+                              : "",
+                            ch.lostDemand.length
+                              ? `${ch.lostDemand.length} place${ch.lostDemand.length > 1 ? "s" : ""} you prefer marked closed`
+                              : "",
                           ]
                             .filter(Boolean)
                             .join(", ")}. Open the pin for details.`}

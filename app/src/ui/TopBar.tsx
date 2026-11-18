@@ -59,14 +59,25 @@ export function TopBar() {
         >
           Search <kbd>{/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl"} K</kbd>
         </button>
-        <button type="button" className="btn btn--ghost top__guide" onClick={startTour} disabled={!release} data-tip="Replay the guided tour">
+        <button
+          type="button"
+          className="btn btn--ghost top__guide"
+          onClick={startTour}
+          disabled={!release}
+          data-tip="Replay the guided tour"
+        >
           <span className="top__guide-mark" aria-hidden="true">
             ?
           </span>
           Guide
         </button>
         <ThemeToggle />
-        <button type="button" className="btn btn--ghost" onClick={() => open("data")} data-tip="What was cleaned, what's covered, and how scores work">
+        <button
+          type="button"
+          className="btn btn--ghost"
+          onClick={() => open("data")}
+          data-tip="What was cleaned, what's covered, and how scores work"
+        >
           About the data
         </button>
         <CopyLinkButton />
@@ -101,7 +112,13 @@ function ThemeToggle() {
   const pref = useTheme((s) => s.pref);
   const cycle = useTheme((s) => s.cycle);
   return (
-    <button type="button" className="iconbtn" onClick={cycle} aria-label={`${THEME_LABEL[pref]}. Click to change.`} data-tip={`${THEME_LABEL[pref]} · click to change`}>
+    <button
+      type="button"
+      className="iconbtn"
+      onClick={cycle}
+      aria-label={`${THEME_LABEL[pref]}. Click to change.`}
+      data-tip={`${THEME_LABEL[pref]} · click to change`}
+    >
       <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
         {pref === "light" && (
           <g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
@@ -148,30 +165,30 @@ function CopyLinkButton() {
   };
   return (
     <>
-    <button
-      type="button"
-      className={`btn btn--ghost copylink copylink--${state}`}
-      aria-label="Copy link"
-      aria-busy={state === "busy" || undefined}
-      data-tip="The link rebuilds this exact plan for whoever opens it, and shows a preview card in Slack or iMessage"
-      onClick={() => void run()}
-    >
-      <span className="copylink__label copylink__label--idle" aria-hidden="true">
-        Copy link
+      <button
+        type="button"
+        className={`btn btn--ghost copylink copylink--${state}`}
+        aria-label="Copy link"
+        aria-busy={state === "busy" || undefined}
+        data-tip="The link rebuilds this exact plan for whoever opens it, and shows a preview card in Slack or iMessage"
+        onClick={() => void run()}
+      >
+        <span className="copylink__label copylink__label--idle" aria-hidden="true">
+          Copy link
+        </span>
+        <span className="copylink__label copylink__label--busy" aria-hidden="true">
+          <i className="spinner" aria-hidden="true" /> Copying…
+        </span>
+        <span className="copylink__label copylink__label--done" aria-hidden="true">
+          <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+            <path d="M2.5 6.3 5 8.6l4.6-5" />
+          </svg>
+          Copied
+        </span>
+      </button>
+      <span className="sr-only" role="status">
+        {state === "done" ? "Link copied" : ""}
       </span>
-      <span className="copylink__label copylink__label--busy" aria-hidden="true">
-        <i className="spinner" aria-hidden="true" /> Copying…
-      </span>
-      <span className="copylink__label copylink__label--done" aria-hidden="true">
-        <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-          <path d="M2.5 6.3 5 8.6l4.6-5" />
-        </svg>
-        Copied
-      </span>
-    </button>
-    <span className="sr-only" role="status">
-      {state === "done" ? "Link copied" : ""}
-    </span>
     </>
   );
 }

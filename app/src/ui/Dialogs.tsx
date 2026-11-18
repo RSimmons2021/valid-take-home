@@ -6,6 +6,7 @@ import { LiftTab } from "./LiftTab";
 import { ResultsDialog } from "./ResultsDialog";
 import { Glyph } from "./TopBar";
 import { activeSteps } from "./tour/steps";
+import { AnimatedNumber, AutoHeight, Indicator, Swap } from "./motion";
 import { compact, copy, download, int, pct, slug } from "./format";
 import { toast } from "./toast";
 
@@ -62,7 +63,9 @@ export function Dialogs() {
   if (dialog === "results")
     return (
       <Modal title="Learn from results" onClose={close} wide>
-        <ResultsDialog />
+        <AutoHeight>
+          <ResultsDialog />
+        </AutoHeight>
       </Modal>
     );
   return null;
@@ -76,6 +79,13 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
   const profileId = useStore((s) => s.profileId);
   const [tab, setTab] = useState<Tab>("zips");
   const [minShare, setMinShare] = useState(0.5);
+  // direction of travel between tabs, so the new panel slides in from the side it lives on
+  const order: Tab[] = ["zips", "google", "lift", "files"];
+  const prevTab = useRef(tab);
+  const dir = Math.sign(order.indexOf(tab) - order.indexOf(prevTab.current));
+  useEffect(() => {
+    prevTab.current = tab;
+  }, [tab]);
 
   const zips = useMemo(() => plannedZips(metro, plan), [metro, plan]);
   const kept = zips.filter((z) => z.share >= minShare);
@@ -88,13 +98,16 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal title="Export plan" onClose={onClose} wide>
-      <p className="eyebrow">Export · {metro.info.name} · {profile}</p>
+      <p className="eyebrow">
+        Export · {metro.info.name} · {profile}
+      </p>
       <h2>Take the plan to your ad accounts</h2>
       <p className="lede">
-        {plan.pins.length} pins · {compact(plan.homes)} homes · {pct(plan.homes ? plan.onTargetHomes / plan.homes : 0)} on target. Pick
-        the format your campaign uses.
+        {plan.pins.length} pins · {compact(plan.homes)} homes · {pct(plan.homes ? plan.onTargetHomes / plan.homes : 0)} on target. Pick the
+        format your campaign uses.
       </p>
       <div className="tabs" role="tablist">
+        <Indicator value={tab} selector='[aria-selected="true"]' className="tabs__ink" />
         {(
           [
             ["zips", "ZIP codes", "Meta & Google"],
@@ -110,119 +123,131 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
         ))}
       </div>
 
-      {tab === "zips" && (
-        <div className="export">
-          <div className="export__side">
-            <p>
-              ZIP targeting is coarser than pins. Keep the ZIPs the pins mostly cover, so you don't pay for the far side of a ZIP the plan
-              only clips.
-            </p>
-            <div className="segmented segmented--small" role="radiogroup" aria-label="Minimum share of ZIP reached">
-              {[0.25, 0.5, 0.75].map((s) => (
-                <button key={s} type="button" role="radio" aria-checked={minShare === s} onClick={() => setMinShare(s)}>
-                  ≥ {pct(s)}
-                </button>
-              ))}
+      <AutoHeight>
+        <Swap k={tab} dir={dir}>
+          {tab === "zips" && (
+            <div className="export">
+              <div className="export__side">
+                <p>
+                  ZIP targeting is coarser than pins. Keep the ZIPs the pins mostly cover, so you don't pay for the far side of a ZIP the
+                  plan only clips.
+                </p>
+                <div className="segmented segmented--small" role="radiogroup" aria-label="Minimum share of ZIP reached">
+                  <Indicator value={minShare} />
+                  {[0.25, 0.5, 0.75].map((s) => (
+                    <button key={s} type="button" role="radio" aria-checked={minShare === s} onClick={() => setMinShare(s)}>
+                      ≥ {pct(s)}
+                    </button>
+                  ))}
+                </div>
+                <ol className="steps">
+                  <li>
+                    <b>Meta Ads Manager</b> · Ad set ▸ Audience ▸ Locations ▸ <i>Add locations in bulk</i> ▸ Postal code. Paste.
+                  </li>
+                  <li>
+                    <b>Google Ads</b> · Campaign settings ▸ Locations ▸ <i>Advanced search</i> ▸ Bulk locations. Paste.
+                  </li>
+                </ol>
+                <div className="export__actions">
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    onClick={() => copyText(zipText, `${kept.length} ZIPs`)}
+                    disabled={!kept.length}
+                  >
+                    Copy <AnimatedNumber value={kept.length} format={(v) => String(Math.round(v))} ms={240} /> ZIPs
+                  </button>
+                  <button type="button" className="btn btn--ghost" onClick={() => download(`${base}-zips.csv`, zipsCsv(zips), "text/csv")}>
+                    ZIP report .csv
+                  </button>
+                </div>
+              </div>
+              <div className="export__preview">
+                <table className="ziptable">
+                  <thead>
+                    <tr>
+                      <th>ZIP</th>
+                      <th>Reached</th>
+                      <th>Of ZIP</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {zips.map((z) => (
+                      <tr key={z.code} data-out={z.share < minShare || undefined}>
+                        <td>{z.code}</td>
+                        <td>{int(z.reached)}</td>
+                        <td>
+                          <span className="minibar">
+                            <i style={{ width: pct(Math.min(1, z.share)) }} />
+                          </span>
+                          {pct(Math.min(1, z.share))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <ol className="steps">
-              <li>
-                <b>Meta Ads Manager</b> · Ad set ▸ Audience ▸ Locations ▸ <i>Add locations in bulk</i> ▸ Postal code. Paste.
-              </li>
-              <li>
-                <b>Google Ads</b> · Campaign settings ▸ Locations ▸ <i>Advanced search</i> ▸ Bulk locations. Paste.
-              </li>
-            </ol>
-            <div className="export__actions">
-              <button type="button" className="btn btn--primary" onClick={() => copyText(zipText, `${kept.length} ZIPs`)} disabled={!kept.length}>
-                Copy {kept.length} ZIPs
+          )}
+
+          {tab === "google" && (
+            <div className="export">
+              <div className="export__side">
+                <p>One line per pin in Google's bulk radius format: radius, latitude, longitude.</p>
+                <ol className="steps">
+                  <li>Campaign settings ▸ Locations ▸ Advanced search ▸ Radius ▸ Bulk.</li>
+                  <li>Paste the lines and add them as targeted locations.</li>
+                </ol>
+                <p className="hint">For Meta pins, use the CSV under Files: it has each pin's coordinates and radius.</p>
+                <div className="export__actions">
+                  <button type="button" className="btn btn--primary" onClick={() => copyText(googleText, `${plan.pins.length} pins`)}>
+                    Copy {plan.pins.length} lines
+                  </button>
+                </div>
+              </div>
+              <pre className="export__code">{googleText}</pre>
+            </div>
+          )}
+
+          {tab === "lift" && <LiftTab minShare={minShare} base={base} />}
+
+          {tab === "files" && (
+            <div className="export export--files">
+              <button
+                type="button"
+                className="filecard filecard--lead"
+                onClick={() => {
+                  onClose();
+                  window.dispatchEvent(new Event("catchment:print"));
+                }}
+              >
+                <b>Client one-pager</b>
+                <span>
+                  A printable plan (or PDF): map, pins, ZIPs, the reasoning, the lift test and data caveats. What you'd send a client.
+                </span>
               </button>
-              <button type="button" className="btn btn--ghost" onClick={() => download(`${base}-zips.csv`, zipsCsv(zips), "text/csv")}>
-                ZIP report .csv
+              <button type="button" className="filecard" onClick={() => download(`${base}-pins.csv`, pinsCsv(plan), "text/csv")}>
+                <b>Pins .csv</b>
+                <span>Rank, name, coordinates, radius, homes and score for each pin. Opens in any spreadsheet.</span>
+              </button>
+              <button
+                type="button"
+                className="filecard"
+                onClick={() =>
+                  download(`${base}.geojson`, planGeoJson(plan, { metro, profile, link: location.href }), "application/geo+json")
+                }
+              >
+                <b>Plan .geojson</b>
+                <span>Pin circles as polygons with their stats, plus the Overture release and a link back to this plan.</span>
+              </button>
+              <button type="button" className="filecard" onClick={() => download(`${base}-zips.csv`, zipsCsv(zips), "text/csv")}>
+                <b>ZIP report .csv</b>
+                <span>Every ZIP the plan touches, with how many of its homes the pins reach.</span>
               </button>
             </div>
-          </div>
-          <div className="export__preview">
-            <table className="ziptable">
-              <thead>
-                <tr>
-                  <th>ZIP</th>
-                  <th>Reached</th>
-                  <th>Of ZIP</th>
-                </tr>
-              </thead>
-              <tbody>
-                {zips.map((z) => (
-                  <tr key={z.code} data-out={z.share < minShare || undefined}>
-                    <td>{z.code}</td>
-                    <td>{int(z.reached)}</td>
-                    <td>
-                      <span className="minibar">
-                        <i style={{ width: pct(Math.min(1, z.share)) }} />
-                      </span>
-                      {pct(Math.min(1, z.share))}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {tab === "google" && (
-        <div className="export">
-          <div className="export__side">
-            <p>One line per pin in Google's bulk radius format: radius, latitude, longitude.</p>
-            <ol className="steps">
-              <li>Campaign settings ▸ Locations ▸ Advanced search ▸ Radius ▸ Bulk.</li>
-              <li>Paste the lines and add them as targeted locations.</li>
-            </ol>
-            <p className="hint">For Meta pins, use the CSV under Files: it has each pin's coordinates and radius.</p>
-            <div className="export__actions">
-              <button type="button" className="btn btn--primary" onClick={() => copyText(googleText, `${plan.pins.length} pins`)}>
-                Copy {plan.pins.length} lines
-              </button>
-            </div>
-          </div>
-          <pre className="export__code">{googleText}</pre>
-        </div>
-      )}
-
-      {tab === "lift" && <LiftTab minShare={minShare} base={base} />}
-
-      {tab === "files" && (
-        <div className="export export--files">
-          <button
-            type="button"
-            className="filecard filecard--lead"
-            onClick={() => {
-              onClose();
-              window.dispatchEvent(new Event("catchment:print"));
-            }}
-          >
-            <b>Client one-pager</b>
-            <span>A printable plan (or PDF): map, pins, ZIPs, the reasoning, the lift test and data caveats. What you'd send a client.</span>
-          </button>
-          <button type="button" className="filecard" onClick={() => download(`${base}-pins.csv`, pinsCsv(plan), "text/csv")}>
-            <b>Pins .csv</b>
-            <span>Rank, name, coordinates, radius, homes and score for each pin. Opens in any spreadsheet.</span>
-          </button>
-          <button
-            type="button"
-            className="filecard"
-            onClick={() =>
-              download(`${base}.geojson`, planGeoJson(plan, { metro, profile, link: location.href }), "application/geo+json")
-            }
-          >
-            <b>Plan .geojson</b>
-            <span>Pin circles as polygons with their stats, plus the Overture release and a link back to this plan.</span>
-          </button>
-          <button type="button" className="filecard" onClick={() => download(`${base}-zips.csv`, zipsCsv(zips), "text/csv")}>
-            <b>ZIP report .csv</b>
-            <span>Every ZIP the plan touches, with how many of its homes the pins reach.</span>
-          </button>
-        </div>
-      )}
+          )}
+        </Swap>
+      </AutoHeight>
       <p className="fineprint">
         Homes are Overture address points (units counted where the county lists them), not audience sizes. Platforms estimate reach from
         their own users.
@@ -330,7 +355,9 @@ function DataDialog({ onClose }: { onClose: () => void }) {
               {int(metro.file.changes.totals.newly_closed)} places newly marked closed (matched by GERS id).
             </p>
           )}
-          <p className="hint">Places map to signals through Overture's new taxonomy (basic_category and taxonomy.primary), not the removed categories field.</p>
+          <p className="hint">
+            Places map to signals through Overture's new taxonomy (basic_category and taxonomy.primary), not the removed categories field.
+          </p>
         </section>
       </div>
       <details className="method">
@@ -401,8 +428,8 @@ function WelcomeDialog({ onClose }: { onClose: () => void }) {
           ))}
         </div>
         <p className="welcome__after">
-          <span className="hand">Then a {activeSteps().length}-step tour shows you around</span> · about a minute, skippable, and the <b>Guide</b> button
-          replays it.
+          <span className="hand">Then a {activeSteps().length}-step tour shows you around</span> · about a minute, skippable, and the{" "}
+          <b>Guide</b> button replays it.
         </p>
       </div>
     </Modal>

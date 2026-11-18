@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { Swap, useFlip } from "./motion";
 import { WEIGHTS, WEIGHT_LABEL, type Factor, type Weight, factorsFor } from "../model/factors";
 import { PROFILES, isPristine, profileById } from "../model/profiles";
 import { BriefBox } from "../ai/BriefBox";
@@ -32,6 +33,10 @@ export function BusinessPanel() {
   const active = factors.filter((f) => (weights[f.id] ?? 0) !== 0);
   const rest = factors.filter((f) => (weights[f.id] ?? 0) === 0);
   const pristine = profile ? isPristine(profile, weights) : true;
+  // Switching business type or zeroing a weight moves rows between the two lists. They
+  // glide to their new places and new rows fade up, instead of the panel reflowing at once.
+  const listsRef = useRef<HTMLDivElement>(null);
+  useFlip(listsRef, [profileId, weights, showAll, aiActive], { enter: true });
 
   return (
     <section className="panel panel--left" aria-labelledby="business-title">
@@ -62,68 +67,83 @@ export function BusinessPanel() {
             </button>
           ))}
         </div>
-        {aiActive ? (
-          <p className="panel__blurb">
-            {applied.summary}{" "}
-            <button type="button" className="link" onClick={undoApplied} data-tip="Restore the weights you had before applying the suggestion">
-              Undo
-            </button>
-          </p>
-        ) : (
-          profile && <p className="panel__blurb">{profile.blurb}</p>
-        )}
-
-        <div className="panel__head">
-          <p className="eyebrow">
-            <b>02</b> What matters
-          </p>
-          {!pristine && (
-            <button type="button" className="link" onClick={resetWeights}>
-              Reset to {profile?.label}
-            </button>
+        <Swap k={aiActive ? "ai" : profileId}>
+          {aiActive ? (
+            <p className="panel__blurb">
+              {applied.summary}{" "}
+              <button
+                type="button"
+                className="link"
+                onClick={undoApplied}
+                data-tip="Restore the weights you had before applying the suggestion"
+              >
+                Undo
+              </button>
+            </p>
+          ) : (
+            profile && <p className="panel__blurb">{profile.blurb}</p>
           )}
-        </div>
-        <ul className="factors">
-          {active.map((f) => (
-            <FactorRow
-              key={f.id}
-              factor={f}
-              weight={weights[f.id] ?? 0}
-              competitor={aiActive ? applied.competitor === f.id : profile?.competitor === f.id}
-              // The model's reason stays visible only while the weight is still the one it suggested.
-              aiReason={aiActive && applied.reasons[f.id]?.weight === weights[f.id] ? applied.reasons[f.id].reason : undefined}
-              onChange={setWeight}
-            />
-          ))}
-        </ul>
-        <button type="button" className="disclosure" aria-expanded={showAll} onClick={() => setShowAll((v) => !v)}>
-          <span aria-hidden="true">{showAll ? "−" : "+"}</span> {showAll ? "Hide" : "Add"} other signals
-          <span className="muted"> · {rest.length}</span>
-        </button>
-        {showAll && (
-          <ul className="factors factors--rest">
-            {rest.map((f) => (
-              <FactorRow key={f.id} factor={f} weight={0} competitor={profile?.competitor === f.id} onChange={setWeight} />
+        </Swap>
+
+        <div ref={listsRef}>
+          <div className="panel__head">
+            <p className="eyebrow">
+              <b>02</b> What matters
+            </p>
+            {!pristine && (
+              <button type="button" className="link appear" onClick={resetWeights}>
+                Reset to {profile?.label}
+              </button>
+            )}
+          </div>
+          <ul className="factors">
+            {active.map((f) => (
+              <FactorRow
+                key={f.id}
+                factor={f}
+                weight={weights[f.id] ?? 0}
+                competitor={aiActive ? applied.competitor === f.id : profile?.competitor === f.id}
+                // The model's reason stays visible only while the weight is still the one it suggested.
+                aiReason={aiActive && applied.reasons[f.id]?.weight === weights[f.id] ? applied.reasons[f.id].reason : undefined}
+                onChange={setWeight}
+              />
             ))}
           </ul>
-        )}
+          <button
+            type="button"
+            className="disclosure"
+            data-flip-key="disclosure"
+            aria-expanded={showAll}
+            onClick={() => setShowAll((v) => !v)}
+          >
+            <span aria-hidden="true">{showAll ? "−" : "+"}</span> {showAll ? "Hide" : "Add"} other signals
+            <span className="muted"> · {rest.length}</span>
+          </button>
+          {showAll && (
+            <ul className="factors factors--rest">
+              {rest.map((f) => (
+                <FactorRow key={f.id} factor={f} weight={0} competitor={profile?.competitor === f.id} onChange={setWeight} />
+              ))}
+            </ul>
+          )}
 
-        <div className="field">
-          <span className="field__label" id="min-homes-label">
-            Only score cells with at least
-          </span>
-          <Select
-            variant="field"
-            label="Only score cells with at least"
-            value={minHomes}
-            options={MIN_HOMES.map((n) => ({
-              value: n,
-              label: n === 0 ? "Any number of homes" : `${n} homes`,
-              detail: MIN_HOMES_DETAIL[n],
-            }))}
-            onChange={setMinHomes}
-          />
-          <p className="hint">Cells are ~0.1 km². Sparse cells (parks, industrial land, water) stay unscored.</p>
+          <div className="field" data-flip-key="min-homes">
+            <span className="field__label" id="min-homes-label">
+              Only score cells with at least
+            </span>
+            <Select
+              variant="field"
+              label="Only score cells with at least"
+              value={minHomes}
+              options={MIN_HOMES.map((n) => ({
+                value: n,
+                label: n === 0 ? "Any number of homes" : `${n} homes`,
+                detail: MIN_HOMES_DETAIL[n],
+              }))}
+              onChange={setMinHomes}
+            />
+            <p className="hint">Cells are ~0.1 km². Sparse cells (parks, industrial land, water) stay unscored.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -145,7 +165,7 @@ function FactorRow({
 }) {
   const id = `f-${factor.id}`;
   return (
-    <li className="factor">
+    <li className="factor" data-flip-key={factor.id}>
       <div className="factor__text">
         <span className="factor__label" id={id}>
           {factor.label}

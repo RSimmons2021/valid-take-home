@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { AnimatedNumber } from "./motion";
 import { bestShuffle, liftCsv, targetUnits } from "../model/holdout";
 import { useStore } from "../state/store";
 import { compact, copy, download, pct } from "./format";
@@ -27,7 +28,8 @@ export function LiftTab({ minShare, base }: { minShare: number; base: string }) 
   const d = useMemo(() => bestShuffle(target, start), [target, start]);
   const testZips = [...d.pairs.map((p) => p.test.zip), ...(d.unpaired ? [d.unpaired.zip] : [])];
   const controlZips = d.pairs.map((p) => p.control.zip);
-  const copyList = async (zips: string[], what: string) => toast((await copy(zips.join("\n"))) ? `${zips.length} ${what} ZIPs copied` : "Couldn't copy");
+  const copyList = async (zips: string[], what: string) =>
+    toast((await copy(zips.join("\n"))) ? `${zips.length} ${what} ZIPs copied` : "Couldn't copy");
 
   if (d.pairs.length === 0) {
     return (
@@ -44,8 +46,8 @@ export function LiftTab({ minShare, base }: { minShare: number; base: string }) 
     <div className="lift">
       <div className="lift__intro">
         <p>
-          Platform attribution counts conversions that happened <i>near</i> your ads. To know what the ads <i>caused</i>, advertise to
-          half of the plan's ZIPs and hold out a matched half, then compare.
+          Platform attribution counts conversions that happened <i>near</i> your ads. To know what the ads <i>caused</i>, advertise to half
+          of the plan's ZIPs and hold out a matched half, then compare.
         </p>
         <span className={`quality quality--${d.quality}`} data-tip={QUALITY[d.quality]}>
           {d.quality} design
@@ -59,11 +61,15 @@ export function LiftTab({ minShare, base }: { minShare: number; base: string }) 
         </div>
         <div className="stat">
           <dt>Test homes</dt>
-          <dd>{compact(d.testHomes)}</dd>
+          <dd>
+            <AnimatedNumber value={d.testHomes} format={compact} ms={300} />
+          </dd>
         </div>
         <div className="stat">
           <dt data-tip="Homes in control ZIPs: no ads reach them during the test">Held out</dt>
-          <dd>{pct(d.holdoutShare)}</dd>
+          <dd>
+            <AnimatedNumber value={d.holdoutShare} format={pct} ms={300} />
+          </dd>
         </div>
       </dl>
 
@@ -76,7 +82,8 @@ export function LiftTab({ minShare, base }: { minShare: number; base: string }) 
             <th data-tip="Standardised mean difference. Under 0.1 is good, under 0.25 acceptable.">SMD</th>
           </tr>
         </thead>
-        <tbody>
+        {/* keyed by shuffle, so a reshuffle visibly re-deals the numbers */}
+        <tbody key={d.seed} className="redeal">
           {d.balance.map((b) => (
             <tr key={b.covariate}>
               <td>{b.covariate}</td>
@@ -138,8 +145,8 @@ export function LiftTab({ minShare, base }: { minShare: number; base: string }) 
         </button>
       </div>
       <p className="fineprint">
-        Seeded and reproducible: shuffle #{d.seed} of this plan. Adjacent test and control ZIPs can leak a little delivery across
-        borders; that biases lift towards zero, so a measured lift is conservative.
+        Seeded and reproducible: shuffle #{d.seed} of this plan. Adjacent test and control ZIPs can leak a little delivery across borders;
+        that biases lift towards zero, so a measured lift is conservative.
       </p>
     </div>
   );

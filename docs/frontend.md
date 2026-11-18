@@ -114,6 +114,12 @@ The legend entries are keys: hover or focus one to spotlight that kind of block 
 
 - `--ease-out` `cubic-bezier(0.23, 1, 0.32, 1)` for anything entering or responding. `--ease-in-out` `cubic-bezier(0.77, 0, 0.175, 1)` for things moving on screen (the tour spotlight, list reorders). `--ease-land` (a light overshoot) only for pins landing. `--ease-pen` for the tour's hand-drawn strokes.
 - Durations: `--press` 140 ms, `--fast` 180 ms, `--base` 240 ms. UI motion stays under 300 ms. The only longer moves are the camera and the tour's drawing.
+- **Content transitions** (`ui/motion.tsx`), one set of primitives used everywhere:
+  - `useFlip(ref, deps, { enter })` glides rows to new positions and fades new ones up: the pin list, and the factor lists when a business type changes or a weight is zeroed. The disclosure and the homes floor carry flip keys too, so nothing below a list jumps.
+  - `AutoHeight` eases a box to its content's new height: the export dialog between tabs, the brief box as examples collapse and suggestions arrive, and the results dialog between steps.
+  - `Swap` fades in content that was swapped out, sliding 12 px from the side it came from when there's a direction (export tabs). It's used for the cell and pin cards when you move to another cell or pin, and for the business blurb. The first render never animates, and the direction is fixed per swap so a later re-render can't replay it.
+  - `Indicator` (`useIndicator`) is one surface that slides between options: the segmented thumbs (radius, ZIP share, 2D/3D) and the export tabs' underline. The first placement and resizes jump; only selection changes slide.
+  - Smaller touches: an example dropped into the brief washes the field blue for 700 ms, a reshuffled lift test re-deals its numbers, and counts (ZIPs to copy, test homes, held-out share) roll.
 - **Frequency decides.** The ⌘K palette opens with no animation (it's used constantly, from the keyboard). After one tooltip has shown, the next appears without a fade. Exits are faster than entrances: modals sink out in 150 ms, toasts fade in 200 ms.
 - **Press feedback is one gesture.** `scale(0.97)` on buttons, chips and cards; pins dip to 0.94. Hover transforms are gated to `(hover: hover) and (pointer: fine)`, so taps don't leave them stuck.
 - Only `transform` and `opacity` animate. The "on target" bar is a `scaleX`, not a width.
