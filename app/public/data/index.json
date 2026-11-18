@@ -1,0 +1,66 @@
+{
+  "release": "2026-10-21.0",
+  "schema": "2.0.0",
+  "metros": [
+    {
+      "id": "sf-bay",
+      "name": "San Francisco & Oakland",
+      "region": "California",
+      "center": [
+        -122.33,
+        37.79
+      ],
+      "zoom": 11.4,
+      "cells": 3741,
+      "homes": 671630,
+      "places_kept": 98512,
+      "units_per_rooftop": 1.58,
+      "bytes": 2428802
+    },
+    {
+      "id": "austin",
+      "name": "Austin",
+      "region": "Texas",
+      "center": [
+        -97.75,
+        30.3
+      ],
+      "zoom": 11.0,
+      "cells": 11060,
+      "homes": 427527,
+      "places_kept": 82756,
+      "units_per_rooftop": 1.04,
+      "bytes": 2817273
+    },
+    {
+      "id": "chicago",
+      "name": "Chicago",
+      "region": "Illinois",
+      "center": [
+        -87.68,
+        41.86
+      ],
+      "zoom": 10.6,
+      "cells": 11758,
+      "homes": 1026184,
+      "places_kept": 180173,
+      "units_per_rooftop": 1.06,
+      "bytes": 4551890
+    },
+    {
+      "id": "denver",
+      "name": "Denver",
+      "region": "Colorado",
+      "center": [
+        -104.96,
+        39.73
+      ],
+      "zoom": 11.0,
+      "cells": 5989,
+      "homes": 646143,
+      "places_kept": 88144,
+      "units_per_rooftop": 1.66,
+      "bytes": 2506019
+    }
+  ]
+}
