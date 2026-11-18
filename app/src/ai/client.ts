@@ -111,6 +111,17 @@ export const suggestPlan = (brief: string, signal?: AbortSignal) => post<BriefRe
 
 export const writeAngles = (req: AnglesRequest, signal?: AbortSignal) => post<AnglesResponse>("./api/angles", req, signal);
 
+export interface SceneResponse {
+  /** a JPEG data URL: the verified angle's scene, photographed */
+  image: string;
+  scene: string;
+  usage: Usage;
+  cached: boolean;
+}
+
+/** A scene photo for one of a pin's verified angles. The server picks the prompt, not us. */
+export const sceneImage = (req: AnglesRequest & { angle: number }, signal?: AbortSignal) => post<SceneResponse>("./api/scene", req, signal);
+
 /** "gpt-6.1-terra · 7.4 s · $0.002" or "cached · instant" */
 export function usageLine(u: Usage, cached: boolean): string {
   if (cached) return `${u.model} · cached, instant · no cost`;

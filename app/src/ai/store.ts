@@ -4,7 +4,7 @@ import type { Weights } from "../model/factors";
 import type { Pin } from "../model/plan";
 import { profileById } from "../model/profiles";
 import { CUSTOM_PROFILE, useStore } from "../state/store";
-import { type AnglesResponse, ApiError, type BriefResponse, type PlanProposal, health, suggestPlan, writeAngles } from "./client";
+import { type AnglesRequest, type AnglesResponse, ApiError, type BriefResponse, type PlanProposal, health, suggestPlan, writeAngles } from "./client";
 
 type Status = "idle" | "loading" | "done" | "error";
 
@@ -65,6 +65,26 @@ export function pinKey(pin: Pin): string {
 }
 
 /** Who the ads are for: the AI-applied business if there is one, else the preset. */
+/**
+ * The angles request for a pin, exactly as the pin card sends it. Scene images reuse it,
+ * so the server finds the same verified angles in its cache.
+ */
+export function anglesRequestFor(pin: Pin, attempt = useAi.getState().angles[pinKey(pin)]?.attempt ?? 0): AnglesRequest | null {
+  const s = useStore.getState();
+  if (!s.metro) return null;
+  const label = cellLabel(s.metro, pin.cell);
+  return {
+    metroId: s.metroId,
+    lat: pin.lat,
+    lon: pin.lon,
+    radiusMi: pin.radiusMi,
+    weights: s.weights,
+    business: currentBusiness(),
+    area: { hood: label.hood, city: label.city },
+    attempt,
+  };
+}
+
 export function currentBusiness(): { name: string; summary: string } {
   const ai = useAi.getState().applied;
   const s = useStore.getState();
@@ -167,21 +187,8 @@ export const useAi = create<AiStore>((set, get) => ({
     const ctl = new AbortController();
     anglesAbort.set(key, ctl);
     set({ angles: { ...get().angles, [key]: { status: "loading", attempt, data: prev?.data } } });
-    const label = cellLabel(s.metro, pin.cell);
     try {
-      const data = await writeAngles(
-        {
-          metroId: s.metroId,
-          lat: pin.lat,
-          lon: pin.lon,
-          radiusMi: pin.radiusMi,
-          weights: s.weights,
-          business: currentBusiness(),
-          area: { hood: label.hood, city: label.city },
-          attempt,
-        },
-        ctl.signal,
-      );
+      const data = await writeAngles(anglesRequestFor(pin, attempt)!, ctl.signal);
       set({ angles: { ...get().angles, [key]: { status: "done", data, attempt } } });
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return;

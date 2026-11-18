@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 import { MODEL, openAiLlm } from "./ai/llm.ts";
 import { createApi } from "./api.ts";
+import { openAiImage } from "./ai/scene.ts";
 import { DataStore } from "./data.ts";
 import { DailyBudget, LruCache, RateLimiter } from "./guards.ts";
 import { PREVIEW_MAX_BYTES, PreviewStore, sharePage } from "./share.ts";
@@ -38,6 +39,11 @@ const api = createApi({
   budget: new DailyBudget(Number(process.env.AI_DAILY_BUDGET_USD ?? 3)),
   cache: new LruCache(300),
   model: MODEL,
+  image: key ? openAiImage(key) : null,
+  // ~200 KB each: room for a few demo runs' worth of pins
+  imageCache: new LruCache(64),
+  // one Autopilot run asks for one image per pin, so these get their own allowance
+  imageLimiter: new RateLimiter(24, 5 * 60_000),
 });
 
 const TYPES: Record<string, string> = {

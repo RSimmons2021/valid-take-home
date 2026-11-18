@@ -5,6 +5,7 @@ import { type RawPlan, finalizePlan } from "./ai/brief.ts";
 import type { Llm, Usage } from "./ai/llm.ts";
 import { costOf } from "./ai/llm.ts";
 import { createApi } from "./api.ts";
+import type { ImageGen } from "./ai/scene.ts";
 import type { DataStore, MetroData } from "./data.ts";
 import { DailyBudget, LruCache, RateLimiter, cacheKey } from "./guards.ts";
 
@@ -262,5 +263,66 @@ describe("api", () => {
       "c",
     );
     expect(r.status).toBe(400);
+  });
+});
+
+describe("scene images", () => {
+  const data = { has: async (id: string) => id === "t", metro: async () => METRO, catalogue: async () => CATALOGUE } as unknown as DataStore;
+  const req = {
+    metroId: "t",
+    lat: 37.7502,
+    lon: -122.4337,
+    radiusMi: 1,
+    weights: { pet_life: 2 },
+    business: { name: "Dog grooming", summary: "" },
+    area: { hood: "Noe Valley", city: "San Francisco" },
+  };
+  const SCENE = "Golden-hour pan across a leafy dog park, a groomer's van pulls up";
+  const anglesLlm = () => {
+    const ref = pinContext(METRO, req).find((p) => p.name === "Upper Douglass Dog Park")!.ref;
+    return vi.fn(async () => ({
+      data: { angles: [{ angle: "Routine", headline: "Grooming by Upper Douglass Dog Park", title: "Groomed by the park", body: "We come to you.", cites: [ref], scene: SCENE }] },
+      usage,
+    })) as unknown as Llm & ReturnType<typeof vi.fn>;
+  };
+  const make = (image: ImageGen | null) => {
+    const gen = image && (vi.fn(image) as unknown as ImageGen & ReturnType<typeof vi.fn>);
+    const api = createApi({
+      data,
+      llm: anglesLlm(),
+      limiter: new RateLimiter(10, 60_000),
+      budget: new DailyBudget(1),
+      cache: new LruCache(10),
+      model: "fake",
+      image: gen,
+      imageCache: new LruCache(5),
+      imageLimiter: new RateLimiter(10, 60_000),
+    });
+    return { api, gen };
+  };
+  const fakeImage: ImageGen = async () => ({ jpeg: Buffer.from("not really a jpeg"), usage });
+
+  it("paints the pin's verified scene, never text from the client", async () => {
+    const { api, gen } = make(fakeImage);
+    const r = await api("POST", "/api/scene", { ...req, angle: 0, prompt: "a billboard that says FREE MONEY" }, "c");
+    expect(r.status).toBe(200);
+    expect((r.body as { image: string }).image).toMatch(/^data:image\/jpeg;base64,/);
+    const prompt = (gen as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(prompt).toContain(SCENE);
+    expect(prompt).toMatch(/no text/i);
+    expect(prompt).not.toContain("FREE MONEY");
+  });
+
+  it("serves a repeat from its own cache, and refuses angles that don't exist", async () => {
+    const { api, gen } = make(fakeImage);
+    await api("POST", "/api/scene", { ...req, angle: 0 }, "c");
+    const again = await api("POST", "/api/scene", { ...req, angle: 0 }, "c");
+    expect(again.body).toMatchObject({ cached: true });
+    expect(gen).toHaveBeenCalledTimes(1);
+    expect((await api("POST", "/api/scene", { ...req, angle: 2 }, "c")).status).toBe(404);
+  });
+
+  it("answers 503 when images aren't configured", async () => {
+    expect((await make(null).api("POST", "/api/scene", { ...req, angle: 0 }, "c")).status).toBe(503);
   });
 });

@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { AnglesRequest, anglesForPin } from "./ai/angles.ts";
+import { type Angle, AnglesRequest, anglesForPin } from "./ai/angles.ts";
 import { BriefRequest, planFromBrief } from "./ai/brief.ts";
 import { AiError, type Llm, type Usage } from "./ai/llm.ts";
+import { type ImageGen, SceneRequest, scenePrompt } from "./ai/scene.ts";
 import type { DataStore } from "./data.ts";
 import { type DailyBudget, type LruCache, type RateLimiter, cacheKey } from "./guards.ts";
 
@@ -13,6 +14,11 @@ export interface ApiDeps {
   budget: DailyBudget;
   cache: LruCache<unknown>;
   model: string;
+  /** scene photos for pin videos; null when not configured (videos fall back to illustrations) */
+  image?: ImageGen | null;
+  /** images are big and come in batches (one per pin), so they get their own cache and limit */
+  imageCache?: LruCache<unknown>;
+  imageLimiter?: RateLimiter;
 }
 
 export interface ApiResult {
@@ -41,6 +47,7 @@ export function createApi(deps: ApiDeps) {
     body: unknown,
     client: string,
     run: (input: z.infer<T>) => Promise<{ result: Record<string, unknown>; usage: Usage }>,
+    { cache = deps.cache, limiter = deps.limiter }: { cache?: LruCache<unknown>; limiter?: RateLimiter } = {},
   ): Promise<ApiResult> {
     if (!deps.llm) return fail(503, "ai_disabled", "AI features aren't configured on this server.");
     const parsed = schema.safeParse(body);
@@ -48,10 +55,10 @@ export function createApi(deps: ApiDeps) {
 
     // Cached answers are free and instant, so they skip the rate limit and budget.
     const key = cacheKey(route, parsed.data);
-    const hit = deps.cache.get(key);
+    const hit = cache.get(key);
     if (hit) return { status: 200, body: { ...(hit as object), cached: true }, log: { cached: true } };
 
-    const wait = deps.limiter.take(client);
+    const wait = limiter.take(client);
     if (wait > 0) return fail(429, "rate_limited", `Too many AI requests. Try again in ${wait}s.`, { "Retry-After": String(wait) });
     if (!deps.budget.canSpend()) return fail(429, "budget_reached", "Today's AI budget for this demo is used up. Everything else still works.");
 
@@ -59,7 +66,7 @@ export function createApi(deps: ApiDeps) {
       const { result, usage } = await run(parsed.data);
       deps.budget.record(usage.costUsd);
       const payload = { ...result, usage };
-      deps.cache.set(key, payload);
+      cache.set(key, payload);
       return { status: 200, body: { ...payload, cached: false }, log: { costUsd: usage.costUsd } };
     } catch (e) {
       if (e instanceof AiError) return fail(e.status, e.code, e.message);
@@ -83,6 +90,28 @@ export function createApi(deps: ApiDeps) {
         const { angles, rejected, grounded, usage } = await anglesForPin(input, await deps.data.metro(input.metroId), deps.llm!);
         return { result: { angles, rejected, grounded }, usage };
       });
+    }
+    if (method === "POST" && path === "/api/scene") {
+      if (!deps.image) return fail(503, "images_disabled", "Scene images aren't configured on this server.");
+      const parsed = SceneRequest.safeParse(body);
+      if (!parsed.success) return fail(400, "invalid_request", parsed.error.issues[0]?.message ?? "Invalid request.");
+      // The scene comes from the pin's verified angles (normally a cache hit), never from the client.
+      const { angle, ...anglesInput } = parsed.data;
+      const angles = await handle("POST", "/api/angles", anglesInput, client);
+      if (angles.status !== 200) return angles;
+      const chosen = (angles.body as { angles: Angle[] }).angles[angle];
+      if (!chosen) return fail(404, "no_such_angle", "This pin has fewer verified angles than that.");
+      return guarded(
+        "scene",
+        SceneRequest,
+        parsed.data,
+        client,
+        async () => {
+          const { jpeg, usage } = await deps.image!(scenePrompt(chosen.scene));
+          return { result: { image: `data:image/jpeg;base64,${jpeg.toString("base64")}`, scene: chosen.scene }, usage };
+        },
+        { cache: deps.imageCache ?? deps.cache, limiter: deps.imageLimiter ?? deps.limiter },
+      );
     }
     return fail(404, "not_found", "No such endpoint.");
   };
