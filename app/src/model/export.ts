@@ -33,11 +33,11 @@ export function plannedZips(metro: Metro, plan: Plan): ZipRow[] {
 }
 
 const fmt = (v: number, d = 6) => v.toFixed(d);
-const miles = (r: number) => (Number.isInteger(r) ? String(r) : r.toFixed(1));
+const miles = (r: number) => String(r);
 
 /**
  * Google Ads bulk radius format, one per line: (radius unit : lat : lng).
- * Paste into Locations ▸ Advanced search ▸ Radius ▸ Bulk.
+ * Paste into the Location column in Google Ads Editor’s Make multiple changes tool.
  */
 export function googleRadiusLines(plan: Plan): string {
   return plan.pins.map((p) => `(${miles(p.radiusMi)}mi:${fmt(p.lat)}:${fmt(p.lon)})`).join("\n");

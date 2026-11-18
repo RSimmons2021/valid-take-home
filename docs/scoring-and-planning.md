@@ -86,7 +86,7 @@ Greedy is guaranteed to reach at least (1 − 1/e) ≈ 63% of the optimal covera
 | Export | Format | Where it goes |
 | --- | --- | --- |
 | ZIP list | One ZIP per line, filtered to ZIPs where the pins reach ≥ 25/50/75% of homes (default 50%) | Meta Ads Manager (Locations → Add locations in bulk → postal codes) and Google Ads (Locations → Advanced search → Bulk) |
-| Google radius lines | `(1.5mi:37.774900:-122.419400)` per pin | Google Ads → Locations → Advanced search → Radius → Bulk |
+| Google radius lines | `(1.5mi:37.774900:-122.419400)` per pin | Google Ads Editor → Keywords and targeting → Locations → Make multiple changes |
 | Pins CSV | `rank,name,latitude,longitude,radius,unit,homes,on_target_homes,mean_score,zip` | Any spreadsheet; recreate pins in any platform |
 | ZIP report CSV | `zip,homes_reached,homes_in_zip,share_reached` | Analysis |
 | GeoJSON | A 64-step circle polygon per pin, with its stats, plus the release, profile and a link back to the plan | GIS tools, other map apps |

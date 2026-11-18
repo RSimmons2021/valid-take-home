@@ -120,7 +120,7 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
         {(
           [
             ["zips", "ZIP codes", "Meta & Google"],
-            ["google", "Radius pins", "Google Ads bulk"],
+            ["google", "Radius pins", "Google Ads Editor"],
             ["lift", "Lift test", "Prove it worked"],
             ["files", "Files", "CSV · GeoJSON"],
           ] as const
@@ -138,8 +138,8 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
             <div className="export">
               <div className="export__side">
                 <p>
-                  ZIP targeting is coarser than pins. Keep the ZIPs the pins mostly cover, so you don't pay for the far side of a ZIP the
-                  plan only clips.
+                  Keep ZIPs where the pins reach a large share of mapped homes. Coverage uses addresses inside this metro extract.
+                  Targeting a whole ZIP can reach people beyond its edge.
                 </p>
                 <div className="segmented segmented--small" role="radiogroup" aria-label="Minimum share of ZIP reached">
                   <Indicator value={minShare} />
@@ -177,7 +177,7 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
                     <tr>
                       <th>ZIP</th>
                       <th>Reached</th>
-                      <th>Of ZIP</th>
+                      <th>Of mapped homes</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -202,10 +202,10 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
           {tab === "google" && (
             <div className="export">
               <div className="export__side">
-                <p>One line per pin in Google's bulk radius format: radius, latitude, longitude.</p>
+                <p>Each line is one location target for Google Ads Editor.</p>
                 <ol className="steps">
-                  <li>Campaign settings ▸ Locations ▸ Advanced search ▸ Radius ▸ Bulk.</li>
-                  <li>Paste the lines and add them as targeted locations.</li>
+                  <li>In Google Ads Editor, select your campaign and open Keywords and targeting → Locations → Make multiple changes.</li>
+                  <li>Use the selected campaign as the destination. Paste one pin per row in the Location column, then process and review the changes.</li>
                 </ol>
                 <p className="hint">For Meta pins, use the CSV under Files: it has each pin's coordinates and radius.</p>
                 <div className="export__actions">
@@ -230,7 +230,7 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
                   window.dispatchEvent(new Event("catchment:print"));
                 }}
               >
-                <b>Client one-pager</b>
+                <b>Client report</b>
                 <span>
                   A printable plan (or PDF): map, pins, ZIPs, the reasoning, the lift test and data caveats. What you'd send a client.
                 </span>

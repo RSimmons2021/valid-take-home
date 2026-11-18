@@ -185,7 +185,7 @@ export function createCatchmentServer(deps: Deps): McpServer {
       inputSchema: {
         ...planShape,
         format: z.enum(["zips", "google_radius", "pins_csv", "geojson"]),
-        min_zip_share: z.number().min(0).max(1).default(0.5).describe("For 'zips': keep ZIPs whose homes the pins reach at least this share of"),
+        min_zip_share: z.number().min(0).max(1).default(0.5).describe("Minimum share of a ZIP’s mapped homes reached within this metro extract"),
       },
       annotations: READ_ONLY,
     },

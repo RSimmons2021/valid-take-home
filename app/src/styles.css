@@ -3045,7 +3045,9 @@ dt[data-tip] {
   }
   .pp__map {
     display: block;
-    width: 100%;
+    max-width: 100%;
+    max-height: 195pt;
+    margin-inline: auto;
     border-radius: 8pt;
     border: 1px solid var(--line);
   }

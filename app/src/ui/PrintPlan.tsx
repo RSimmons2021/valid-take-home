@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { currentBusiness, useAi } from "../ai/store";
 import { mapIdle, snapshotMap } from "../map/snapshot";
@@ -15,39 +15,48 @@ import { compact, int, pct } from "./format";
  * on screen. The map image is the real map, snapshotted the moment printing starts.
  */
 export function PrintPlan() {
-  const metro = useStore((s) => s.metro);
-  const plan = useStore((s) => s.plan);
-  const weights = useStore((s) => s.weights);
-  const minHomes = useStore((s) => s.minHomes);
-  useAi((s) => s.applied); // re-render when an AI business is applied
   const [image, setImage] = useState<string | null>(null);
 
+  const [printing, setPrinting] = useState(false);
   useEffect(() => {
     // ⌘P or the browser menu: capture synchronously so the image is in the printed page.
-    const before = () => flushSync(() => setImage(snapshotMap(1600, 900, "image/jpeg", 0.9)));
+    const before = () => flushSync(() => {
+      setImage(snapshotMap(1600, 900, "image/jpeg", 0.9));
+      setPrinting(true);
+    });
+    const after = () => {
+      setPrinting(false);
+      setImage(null);
+    };
     // From the app (palette or Export): frame every pin first, then print.
     const fromApp = async () => {
       useStore.getState().select(null);
       useStore.getState().requestFrame();
       await new Promise((r) => setTimeout(r, 950));
       await mapIdle();
-      flushSync(() => setImage(snapshotMap(1600, 900, "image/jpeg", 0.9)));
       window.print();
     };
     window.addEventListener("beforeprint", before);
+    window.addEventListener("afterprint", after);
     window.addEventListener("catchment:print", fromApp);
     return () => {
       window.removeEventListener("beforeprint", before);
+      window.removeEventListener("afterprint", after);
       window.removeEventListener("catchment:print", fromApp);
     };
   }, []);
 
-  const lift = useMemo(
-    () => (metro && plan ? bestShuffle(targetUnits(metro, plan, weights, minHomes, 0.5)) : null),
-    [metro, plan, weights, minHomes],
-  );
-  if (!metro || !plan) return null;
+  return printing ? <PrintContent image={image} /> : null;
+}
 
+function PrintContent({ image }: { image: string | null }) {
+  const metro = useStore((s) => s.metro);
+  const plan = useStore((s) => s.plan);
+  const weights = useStore((s) => s.weights);
+  const minHomes = useStore((s) => s.minHomes);
+  useAi((s) => s.applied); // re-render when an AI business is applied
+  if (!metro || !plan) return null;
+  const lift = bestShuffle(targetUnits(metro, plan, weights, minHomes));
   const business = currentBusiness();
   const labels = new Map(factorsFor(metro).map((f) => [f.id, f.label]));
   const zips = plannedZips(metro, plan).filter((z) => z.share >= 0.5);
@@ -141,7 +150,7 @@ export function PrintPlan() {
               <h2>Measuring it</h2>
               <p className="pp__note">
                 Lift test ready: {lift.pairs.length} matched ZIP pairs ({lift.quality} design). Advertise to the test ZIPs, hold out the
-                controls for 2–4 weeks, and compare conversions per home.
+                controls for the planned test window, and compare conversions per home.
               </p>
             </>
           )}
@@ -149,7 +158,7 @@ export function PrintPlan() {
       </div>
 
       <section className="pp__zips">
-        <h2>ZIP codes ({zips.length}, ≥ 50% of homes reached)</h2>
+        <h2>ZIP codes ({zips.length}, ≥ 50% of mapped homes reached)</h2>
         <p>{zips.map((z) => z.code).join(" · ")}</p>
       </section>
 

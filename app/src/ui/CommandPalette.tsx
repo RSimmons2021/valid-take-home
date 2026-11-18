@@ -79,7 +79,7 @@ export function CommandPalette() {
       { id: "export", group: "Actions", label: "Export plan", hint: "ZIPs, radius pins, lift test, files", keys: KEYS.export, run: () => s.open("export") },
       { id: "results", group: "Actions", label: "Learn from results", hint: "Calibrate weights from campaign data", run: () => s.open("results") },
       { id: "copy", group: "Actions", label: "Copy link to this plan", run: async () => toast((await copy((await shareLink()).url)) ? "Link copied" : "Couldn't copy") },
-      { id: "print", group: "Actions", label: "Client one-pager (print or PDF)", keys: KEYS.print, run: () => void window.dispatchEvent(new Event("catchment:print")) },
+      { id: "print", group: "Actions", label: "Client report (print or PDF)", keys: KEYS.print, run: () => void window.dispatchEvent(new Event("catchment:print")) },
       { id: "undo", group: "Actions", label: "Undo", keys: KEYS.undo, run: async () => undoToast(await s.undo(), "Undid") },
       { id: "redo", group: "Actions", label: "Redo", keys: KEYS.redo, run: async () => undoToast(await s.redo(), "Redid") },
       { id: "fit", group: "Actions", label: "Fit all pins in view", keys: KEYS.fit, run: () => s.requestFrame() },
