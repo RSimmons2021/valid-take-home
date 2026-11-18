@@ -9,6 +9,7 @@ import { CellCard } from "./ui/CellCard";
 import { CommandPalette, undoToast } from "./ui/CommandPalette";
 import { Dialogs } from "./ui/Dialogs";
 import { PinCard } from "./ui/PinCard";
+import { PrintPlan } from "./ui/PrintPlan";
 import { PlanPanel } from "./ui/PlanPanel";
 import { TooltipLayer } from "./ui/Tooltip";
 import { TopBar } from "./ui/TopBar";
@@ -77,6 +78,7 @@ export function App() {
       <Dialogs />
       <Tour />
       <CommandPalette />
+      <PrintPlan />
       <PlanAnnouncer />
       <TooltipLayer />
       <Toasts />

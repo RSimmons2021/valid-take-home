@@ -7,6 +7,7 @@ import { useStore } from "../state/store";
 import { useTheme } from "../state/theme";
 import { copy } from "./format";
 import { fuzzyScore } from "./fuzzy";
+import { shareLink } from "./share";
 import { toast } from "./toast";
 
 interface Command {
@@ -69,7 +70,7 @@ export function CommandPalette() {
     const c: Command[] = [
       { id: "export", group: "Actions", label: "Export plan", hint: "ZIPs, radius pins, lift test, files", run: () => s.open("export") },
       { id: "results", group: "Actions", label: "Learn from results", hint: "Calibrate weights from campaign data", run: () => s.open("results") },
-      { id: "copy", group: "Actions", label: "Copy link to this plan", run: async () => toast((await copy(location.href)) ? "Link copied" : "Couldn't copy") },
+      { id: "copy", group: "Actions", label: "Copy link to this plan", run: async () => toast((await copy((await shareLink()).url)) ? "Link copied" : "Couldn't copy") },
       { id: "print", group: "Actions", label: "Client one-pager (print or PDF)", keys: `${MOD}P`, run: () => void window.dispatchEvent(new Event("catchment:print")) },
       { id: "undo", group: "Actions", label: "Undo", keys: `${MOD}Z`, run: async () => undoToast(await s.undo(), "Undid") },
       { id: "redo", group: "Actions", label: "Redo", keys: `⇧${MOD}Z`, run: async () => undoToast(await s.redo(), "Redid") },

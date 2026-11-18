@@ -28,6 +28,8 @@ interface AnglesEntry {
 interface AiStore {
   /** null while checking; false on static hosts or without a key */
   available: boolean | null;
+  /** the Catchment server is reachable (link previews), whether or not AI is configured */
+  server: boolean;
   model: string | null;
   brief: string;
   briefStatus: Status;
@@ -73,6 +75,7 @@ export function currentBusiness(): { name: string; summary: string } {
 
 export const useAi = create<AiStore>((set, get) => ({
   available: null,
+  server: false,
   model: null,
   brief: "",
   briefStatus: "idle",
@@ -83,7 +86,7 @@ export const useAi = create<AiStore>((set, get) => ({
 
   async checkHealth() {
     const h = await health();
-    set({ available: h.ai, model: h.model });
+    set({ available: h.ai, server: h.server, model: h.model });
   },
 
   setBrief(brief) {

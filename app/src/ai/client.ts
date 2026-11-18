@@ -88,14 +88,15 @@ async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promi
   return data as T;
 }
 
-export async function health(): Promise<{ ai: boolean; model: string | null }> {
+/** server: our API answers (link previews work); ai: it also has a model key. */
+export async function health(): Promise<{ server: boolean; ai: boolean; model: string | null }> {
   try {
     const res = await fetch("./api/health", { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return { ai: false, model: null };
+    if (!res.ok) return { server: false, ai: false, model: null };
     const data = await res.json();
-    return { ai: !!data.ai, model: data.model ?? null };
+    return { server: !!data.ok, ai: !!data.ai, model: data.model ?? null };
   } catch {
-    return { ai: false, model: null }; // static host: no API
+    return { server: false, ai: false, model: null }; // static host: no API
   }
 }
 

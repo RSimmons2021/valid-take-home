@@ -19,11 +19,16 @@ import { MODEL, openAiLlm } from "./ai/llm.ts";
 import { createApi } from "./api.ts";
 import { DataStore } from "./data.ts";
 import { DailyBudget, LruCache, RateLimiter } from "./guards.ts";
+import { PREVIEW_MAX_BYTES, PreviewStore, sharePage } from "./share.ts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = path.join(ROOT, "dist");
 const PORT = Number(process.env.PORT ?? 8787);
 const MAX_BODY = 8 * 1024;
+/** preview uploads are base64 images: allow for the ~4/3 encoding overhead */
+const MAX_PREVIEW_BODY = Math.ceil(PREVIEW_MAX_BYTES * 1.4) + 1024;
+const previews = new PreviewStore();
+const previewLimiter = new RateLimiter(20, 10 * 60_000);
 
 const key = process.env.OPENAI_API_KEY?.trim();
 const api = createApi({
@@ -67,12 +72,12 @@ function send(res: ServerResponse, status: number, body: unknown, headers: Recor
   res.end(text);
 }
 
-async function readJson(req: IncomingMessage): Promise<unknown> {
+async function readJson(req: IncomingMessage, maxBytes = MAX_BODY): Promise<unknown> {
   let size = 0;
   const chunks: Buffer[] = [];
   for await (const chunk of req) {
     size += (chunk as Buffer).length;
-    if (size > MAX_BODY) throw Object.assign(new Error("too large"), { status: 413 });
+    if (size > maxBytes) throw Object.assign(new Error("too large"), { status: 413 });
     chunks.push(chunk as Buffer);
   }
   try {
@@ -80,6 +85,24 @@ async function readJson(req: IncomingMessage): Promise<unknown> {
   } catch {
     throw Object.assign(new Error("bad json"), { status: 400 });
   }
+}
+
+function origin(req: IncomingMessage): string {
+  const proto = String(req.headers["x-forwarded-proto"] ?? "http").split(",")[0].trim();
+  return `${proto === "https" ? "https" : "http"}://${req.headers.host ?? `localhost:${PORT}`}`;
+}
+
+function sendHtml(req: IncomingMessage, res: ServerResponse, html: string, cache = "no-cache") {
+  const gzipOk = /\bgzip\b/.test(String(req.headers["accept-encoding"] ?? ""));
+  const body = gzipOk ? gzipSync(html) : Buffer.from(html);
+  res.writeHead(200, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": cache,
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    ...(gzipOk ? { "Content-Encoding": "gzip", Vary: "Accept-Encoding" } : {}),
+  });
+  res.end(body);
 }
 
 function serveStatic(req: IncomingMessage, res: ServerResponse) {
@@ -90,6 +113,8 @@ function serveStatic(req: IncomingMessage, res: ServerResponse) {
   if (!existsSync(file)) return send(res, 404, { error: { code: "no_build", message: "Run `npm run build` first." } });
 
   const ext = path.extname(file);
+  // Open Graph needs absolute image URLs; the built page uses a relative one so it works on any static host.
+  if (file.endsWith("index.html")) return sendHtml(req, res, readFileSync(file, "utf8").replaceAll('content="./og.png"', `content="${origin(req)}/og.png"`));
   const headers: Record<string, string> = {
     "Content-Type": TYPES[ext] ?? "application/octet-stream",
     "X-Content-Type-Options": "nosniff",
@@ -117,7 +142,34 @@ function serveStatic(req: IncomingMessage, res: ServerResponse) {
 
 const server = createServer(async (req, res) => {
   const t0 = performance.now();
-  const url = (req.url ?? "/").split("?")[0];
+  // Split on the first "?" only: a plan hash carried in ?h= has its own "?".
+  const raw = req.url ?? "/";
+  const qi = raw.indexOf("?");
+  const url = qi < 0 ? raw : raw.slice(0, qi);
+  const query = qi < 0 ? "" : raw.slice(qi + 1);
+  if (url === "/s") return sendHtml(req, res, sharePage(new URLSearchParams(query), origin(req), (id) => !!previews.get(id)), "public, max-age=300");
+  const preview = /^\/api\/previews\/([a-f0-9]{20})\.png$/.exec(url);
+  if (preview && req.method === "GET") {
+    const img = previews.get(preview[1]);
+    if (!img) {
+      res.writeHead(302, { Location: "/og.png", "Cache-Control": "no-store" });
+      return res.end();
+    }
+    res.writeHead(200, { "Content-Type": img.type, "Cache-Control": "public, max-age=86400", "Content-Length": String(img.bytes.length) });
+    return res.end(img.bytes);
+  }
+  if (url === "/api/previews" && req.method === "POST") {
+    try {
+      const wait = previewLimiter.take(clientId(req));
+      if (wait > 0) return send(res, 429, { error: { code: "rate_limited", message: "Too many previews." } }, { "Retry-After": String(wait) });
+      const body = (await readJson(req, MAX_PREVIEW_BODY)) as { image?: unknown } | null;
+      const r = previews.put(body?.image);
+      return "error" in r ? send(res, 400, { error: { code: "invalid_request", message: r.error } }) : send(res, 201, r);
+    } catch (e) {
+      const status = (e as { status?: number }).status ?? 500;
+      return send(res, status, { error: { code: "invalid_request", message: status === 413 ? "Preview image too large." : "Invalid request." } });
+    }
+  }
   if (!url.startsWith("/api/")) return serveStatic(req, res);
 
   let status = 500;

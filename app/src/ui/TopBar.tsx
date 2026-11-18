@@ -2,6 +2,7 @@ import { useStore } from "../state/store";
 import { type ThemePref, useTheme } from "../state/theme";
 import { Select } from "./Select";
 import { compact, copy } from "./format";
+import { shareLink } from "./share";
 import { toast } from "./toast";
 
 export function TopBar() {
@@ -67,8 +68,12 @@ export function TopBar() {
         <button
           type="button"
           className="btn btn--ghost"
-          data-tip="The link rebuilds this exact plan for whoever opens it"
-          onClick={async () => toast((await copy(location.href)) ? "Link copied. It rebuilds this exact plan." : "Couldn't copy. Use the address bar.")}
+          data-tip="The link rebuilds this exact plan for whoever opens it, and shows a preview card in Slack or iMessage"
+          onClick={async () => {
+            const { url, rich } = await shareLink();
+            const ok = await copy(url);
+            toast(ok ? (rich ? "Link copied, with a preview card of this plan." : "Link copied. It rebuilds this exact plan.") : "Couldn't copy. Use the address bar.");
+          }}
         >
           Copy link
         </button>

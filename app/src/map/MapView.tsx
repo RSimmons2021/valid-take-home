@@ -13,6 +13,7 @@ import { useStore } from "../state/store";
 import { useTheme } from "../state/theme";
 import { applyBasemapTheme, basemapStyle } from "./basemap";
 import { PALETTES, scoreColor } from "./colors";
+import { registerMap } from "./snapshot";
 
 let protocolAdded = false;
 
@@ -97,6 +98,8 @@ export function MapView() {
       attributionControl: { compact: true },
       dragRotate: true,
       hash: false,
+      // Keep the frame readable after drawing, for the printed one-pager and link previews.
+      canvasContextAttributes: { preserveDrawingBuffer: true },
     });
     map.addControl(new NavigationControl({ showCompass: true, visualizePitch: true }), "bottom-right");
     const overlay = new MapboxOverlay({ interleaved: true, layers: [] });
@@ -108,7 +111,9 @@ export function MapView() {
     });
     mapRef.current = map;
     overlayRef.current = overlay;
+    registerMap(map);
     return () => {
+      registerMap(null);
       map.remove();
       mapRef.current = null;
     };

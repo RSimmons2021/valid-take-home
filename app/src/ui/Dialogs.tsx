@@ -175,6 +175,17 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
 
       {tab === "files" && (
         <div className="export export--files">
+          <button
+            type="button"
+            className="filecard filecard--lead"
+            onClick={() => {
+              onClose();
+              window.dispatchEvent(new Event("catchment:print"));
+            }}
+          >
+            <b>Client one-pager</b>
+            <span>A printable plan (or PDF): map, pins, ZIPs, the reasoning, the lift test and data caveats. What you'd send a client.</span>
+          </button>
           <button type="button" className="filecard" onClick={() => download(`${base}-pins.csv`, pinsCsv(plan), "text/csv")}>
             <b>Pins .csv</b>
             <span>Rank, name, coordinates, radius, homes and score for each pin. Opens in any spreadsheet.</span>
