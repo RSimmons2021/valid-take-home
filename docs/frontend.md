@@ -209,14 +209,13 @@ One rule: **measure what can be measured; never fake what can't.**
 - **`autopilot/store.ts`** runs the steps through the app's own actions (`setWeights` via the AI store's apply, `setPins`, the model functions), so the map updates as each step lands and every change is in undo history. `before` snapshots the plan, and **Undo Autopilot** restores it as one step (`applyPlan`). A run ticket makes Stop and reruns safe. If the dialog is closed mid-run, `AutopilotPill` in the top bar shows progress and reopens it.
 - **`autopilot/AutopilotPanel.tsx`** has three views: ask (brief and budget), run (real steps with real details), and kit (a video, script and budget per pin, and downloads).
 - **`video/stills.ts`** photographs each pin with a hidden second MapLibre map: 720×1280, pixel ratio 1, always the light palette, so a film doesn't depend on the viewer's theme. It projects the pin's scored blocks and the script's places while that map is framed, so they line up exactly.
-- **`video/film.ts`** is `drawFrame(ctx, t, spec)`, a pure function of time. Over 8 s:
-  - the map settles from a slow push-in;
-  - blocks colour in from the centre;
-  - a hand-drawn ring circles the reach;
-  - arrows and handwritten labels point at up to three real places, in non-overlapping slots, with ellipses rather than squashed text;
-  - a close card (business, area, homes in reach, a call to action) slides up.
+- **`video/film.ts`** is `drawFrame(ctx, t, spec)`, a pure function of time, telling a 10 s story in four beats:
+  1. **Hook (0–3 s):** the scene photo (or the business's hand-drawn illustration) with a slow push-in, a neighbourhood chip, and the title word by word, readable by 0.7 s.
+  2. **Proof (3–6.4 s):** the real map opens out of the pin in a circular reveal. Blocks colour in from the centre, a hand-drawn ring circles the reach, and arrows with handwritten labels point at up to three real places (non-overlapping slots, ellipses instead of squashed text). The hook line sits on a card above.
+  3. **Benefit (6.4–8.3 s):** a new crop of the scene, with the benefit line and one hand-drawn underline.
+  4. **Close (8.3–10 s):** an ink card rises with the business, the area, the homes in reach and a call to action.
 
-  The title card is readable by 0.6 s. Strokes use seeded randomness, and the attribution is on every frame.
+  Strokes use seeded randomness. The map attribution belongs to the proof beat and fades with it.
 - **`video/FilmPlayer.tsx`** previews by drawing frames live: no file needed, and only the playing film animates. **`video/encode.ts`** encodes the same frames with WebCodecs through Mediabunny, faster than real time: MP4 and H.264, or WebM and VP9 where the browser can't encode H.264. Mediabunny is loaded only on download.
 
 ## Edge states

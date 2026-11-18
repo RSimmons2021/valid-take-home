@@ -29,7 +29,13 @@ Press **✦ Autopilot** (or `A`), describe the business, give a monthly budget, 
 2. **Place the pins:** as many as the budget can feed at $5 a day or more.
 3. **Split the budget:** a floor per pin, then the rest by the well-matched homes each one reaches.
 4. **Write a script per pin:** an on-screen title that passes the sound-off test (8 words or fewer), a hook and a close, citing only verified places inside the pin.
-5. **Make each pin's video:** 8 s, 9:16, drawn in the browser from the pin's real map, its blocks coloured by fit, a hand-drawn ring and arrows to the real places it names. Exported as MP4 (H.264), at no per-video cost, and the same plan always makes the same film.
+5. **Make each pin's video:** a 10 s, 9:16 ad in four beats:
+   - **Hook:** the service, happening. It's an AI photo of the pin's verified scene (no text, logos or real places), or a hand-drawn illustration of the business without AI, with the title readable in under a second.
+   - **Proof:** the pin's real map opens out, with blocks coloured by fit and arrows to the real places it names.
+   - **Benefit:** back to the scene, with what the business does for you.
+   - **Close:** who, where, and a call to action.
+
+   Composed and encoded to MP4 (H.264) in the browser. A scene photo costs about half a cent.
 6. **Design the lift test:** matched ZIP pairs, as in Export.
 
 It ends in a **campaign kit**: a video player and download per pin, each pin's script and budget, a kit `.md` that labels every number *verified*, *estimated* or *unknown*, and **Undo Autopilot**, which puts the plan back in one step. Nothing is launched or spent. Close the dialog and it keeps working, with a pill in the top bar.

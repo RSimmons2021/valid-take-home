@@ -84,14 +84,27 @@ Live measurement: about 1,000 input and 170 output tokens, about 5 s, about $0.0
 
 Autopilot (`src/autopilot/`) calls the same two routes: the brief once, then angles for each pin, two at a time. It adds no AI route and no new kind of output. The model's words go into each pin's script (title, hook, cited places). The budget, the pin count, the cited places' positions and every pixel of the video are computed in the browser. Without AI, every script comes from the data (`scriptFor` in `model/campaign.ts`), naming the nearest verified places for the user's signals and skipping listings that look like a person ("…, MD").
 
-A full run costs about $0.02 (one brief plus eight pins of angles) and takes about a minute, mostly the model. Rerunning hits the server's response cache.
+A full run costs about $0.06:
+- one brief, plus eight pins of angles (≈ $0.02);
+- eight scene photos (≈ $0.04).
 
-**Why the videos aren't AI-generated.** They're drawn in code (`src/video/film.ts`), not made with a video model:
-- They cost nothing per video, render a set of eight in seconds, and come out identical for the same plan.
-- They show the real neighbourhood.
-- They can't invent signage, places or people.
+It takes one to two minutes. Scene photos are requested three at a time, while the map stills are captured. Rerunning hits the server's caches.
 
-The text model does the part it's good at: the words. The `scene` prompts remain for teams that want a generated B-roll shot.
+## Scene photos (`/api/scene`)
+
+A pin's video opens on a photo of the service happening: a groomer towelling off a dog beside a van on a street of painted Victorians. It's made by `gpt-image-2` (`server/ai/scene.ts`).
+- **Never the client's text.** The route takes the same request as `/api/angles` plus an angle index. It looks up the pin's *verified* angles (normally a cache hit) and paints that angle's `scene`, which `verifyAngles` already checked names no real place. So the endpoint can't be used to generate arbitrary images on the project's key. A test sends an extra `prompt` field and asserts it never reaches the model.
+- **A fixed frame around the scene:** vertical, natural light, *no text, letters, logos or signage*, and no identifiable real people.
+- **Low quality, on purpose.** It looks like a good phone photo, takes about 13 s and costs about $0.005 per image (an estimate from published per-image figures; `IMAGE_COST_USD` feeds the daily budget). A medium-quality test took about 30 s and slipped in a readable shoe logo.
+- **Returned as a JPEG data URL** (output compression 82, about 200 KB). Images have their own LRU cache (64) and rate limit (24 per 5 minutes per client), because one Autopilot run asks for one per pin.
+- **Graceful fallback.** Without images, or if one fails, the film opens on a hand-drawn illustration chosen for the business (`motifFor`: paw print, house, sparkles, dumbbell, book, map pin).
+
+**Why a photo plus a drawn film, rather than a generated video.** A text-to-video model would:
+- cost far more per clip and take minutes;
+- invent signage and places;
+- be unable to show the *real* neighbourhood.
+
+Splitting the work keeps each part honest. The photo shows *the service*, which a still does well. The map, the places and the numbers are drawn from data, so they're exact. The words come from verified angles. The kit notes that scene photos are AI-generated, and that Meta may label them "AI info".
 
 ## Guards
 

@@ -62,6 +62,7 @@ Run the checks for whichever side you touched before finishing. CI runs all of t
 - DuckDB 2.0: `con.sql(q).fetchall()` (relations don't keep results), and `geometry_always_xy` must be set (`db.connect()` does it).
 - deck.gl layers accept `beforeId` at runtime but not in their types. Use the `UNDER_BUILDINGS` spread in `MapView.tsx`.
 - Overture quirks are documented in `docs/data-pipeline.md` §6. Read that before "fixing" cleaning or labelling logic.
+- Scene images (`/api/scene`) only ever paint a verified angle's `scene`. Never add a route or field that sends client text to the image model.
 - Films are pure functions of time (`drawFrame`). Keep them deterministic: seeded randomness only, and no network calls while drawing. Callouts must come from verified places, never from free text.
 - E2E tests block `/api`. Don't write a test that needs the AI server, and keep the heavy Autopilot flow in `e2e/autopilot.spec.ts` (its own project, run last).
 - Map pins: MapLibre owns `.pin-anchor`'s `position` and `transform`. Style and animate the inner `.pin` only, or pins drift off their circles.

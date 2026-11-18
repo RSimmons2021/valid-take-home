@@ -210,11 +210,12 @@ Radar's literal cursor lens was left out, because on a planning tool hiding part
 **Why.** "Agents propose, people approve", as in Growth Lab. A one-click result you can inspect and undo is more useful than a black box. Applying AI weights without a separate review step is acceptable here only because the run is user-initiated, the reasons are shown, and the whole run undoes in one step.
 **Rejected.** Pushing campaigns to Meta or Google (needs OAuth into someone's ad account), and spending to a cap (a take-home has no business holding anyone's money).
 
-### 37. Videos are drawn, not generated
+### 37. Videos are composed: a photo of the service, a film of the data
 
-**Decision.** Each pin's video is a deterministic canvas film of the real map, encoded in the browser.
-**Why.** It's free per video, fast (eight films in seconds), reproducible, and it shows the actual neighbourhood. A video model would cost money per video and take minutes. It would also hallucinate signage, which is exactly what the angles' `scene` lint exists to prevent. Growth Lab's code films use the same approach.
-**Cost.** The films are motion graphics, not live action. The `scene` prompts remain for teams that want generated B-roll.
+**Context.** The first version was only the map with a ring around the pin. It was accurate, but it wasn't an ad: nothing showed the service.
+**Decision.** Each video is a 10 s canvas film in four beats (hook, proof, benefit, close). The hook and benefit use an AI scene photo of the pin's verified angle. The proof beat is the real map and the real places. The film is encoded in the browser.
+**Why.** A still photo is what image models do well, and it shows the *service*. Everything that must be true (the neighbourhood, the places, the reach) is drawn from data. A text-to-video model would cost more, take minutes, invent signage, and couldn't show the real neighbourhood.
+**Cost.** About $0.005 and about 13 s per scene photo. Without AI, the hook falls back to a hand-drawn illustration of the business.
 
 ### 38. Budget floor before proportion
 
@@ -225,3 +226,9 @@ Radar's literal cursor lens was left out, because on a planning tool hiding part
 
 **Decision.** Every e2e test aborts `/api/*`, and the Autopilot flow runs alone after the others.
 **Why.** `vite preview` proxies `/api` to a local AI server if one is running, so tests silently depended on the developer's machine (and spent money). Autopilot's second WebGL map and video encode also starved parallel tests on a software renderer.
+
+### 40. Image prompts come from verified angles, never from the client
+
+**Decision.** `/api/scene` takes the angles request plus an index, and paints that verified angle's scene inside a fixed frame (no text, logos, signage or real likenesses).
+**Why.** An image endpoint that accepted a prompt would be a free image generator on the project's key, and a way to put anything in an ad. Reusing the grounded, linted scene keeps the guarantee the copy already has. A test proves an injected `prompt` field never reaches the model.
+**Also.** Low quality was chosen after a side-by-side test: medium took about twice as long and rendered a readable brand logo.
