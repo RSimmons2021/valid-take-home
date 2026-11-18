@@ -103,7 +103,13 @@ export function CellCard() {
 
       {[...near.entries()].some(([s]) => activeSignals.has(metro.signals[s].id)) && (
         <>
-          <p className="eyebrow card__section">Nearby, from Overture places</p>
+          <p className="eyebrow card__section">
+            Nearby, from Overture places
+            <span className="card__key" aria-hidden="true">
+              <i className="pos" /> prefer <i className="neg" /> avoid
+            </span>
+          </p>
+          <p className="hint card__hint">Linked on the map to the cell they score.</p>
           <ul className="near">
             {[...near.entries()]
               .filter(([s]) => activeSignals.has(metro.signals[s].id))

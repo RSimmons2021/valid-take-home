@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { MapView } from "./map/MapView";
-import { rampCss } from "./map/colors";
+import { PALETTES, rampCss } from "./map/colors";
 import { useStore } from "./state/store";
+import { useTheme } from "./state/theme";
 import { BusinessPanel } from "./ui/BusinessPanel";
 import { CellCard } from "./ui/CellCard";
 import { Dialogs } from "./ui/Dialogs";
@@ -60,6 +61,9 @@ function Legend() {
   const minHomes = useStore((s) => s.minHomes);
   const metro = useStore((s) => s.metro)!;
   const open = useStore((s) => s.open);
+  const view3d = useStore((s) => s.view3d);
+  const setView3d = useStore((s) => s.setView3d);
+  const theme = useTheme((s) => s.theme);
   const lowUnits = metro.ledger.addresses.units_per_rooftop < 1.2;
   return (
     <div className="legend">
@@ -68,7 +72,7 @@ function Legend() {
       </span>
       <span className="legend__ramp">
         <span>50</span>
-        <i style={{ background: rampCss() }} aria-hidden="true" />
+        <i style={{ background: rampCss(PALETTES[theme]) }} aria-hidden="true" />
         <span>100 fit</span>
       </span>
       <span className="legend__item legend__muted">Unshaded: under {minHomes} homes</span>
@@ -77,6 +81,14 @@ function Legend() {
           Apartment units not listed here ⓘ
         </button>
       )}
+      <span className="segmented segmented--small legend__view" role="radiogroup" aria-label="Map view">
+        <button type="button" role="radio" aria-checked={!view3d} onClick={() => setView3d(false)}>
+          2D
+        </button>
+        <button type="button" role="radio" aria-checked={view3d} onClick={() => setView3d(true)} title="Raise each cell by its number of homes">
+          3D
+        </button>
+      </span>
     </div>
   );
 }

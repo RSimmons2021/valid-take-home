@@ -1,13 +1,14 @@
-/**
- * Score → colour. Below the on-target line cells are a faint warm wash (present, not
- * worth buying); above it they ramp from pale to Radar blue. The ramp is perceptually
- * even-ish because it interpolates in OKLab, not RGB.
- */
-type RGBA = [number, number, number, number];
+import type { Theme } from "../state/theme";
 
-const LOW: RGBA = [138, 128, 112, 26];
-const PALE: [number, number, number] = [205, 210, 255];
-const DEEP: [number, number, number] = [22, 38, 255];
+/**
+ * Score → colour. Below the on-target line cells are a faint wash (present, not worth
+ * buying); above it they ramp towards the brand colour. Ramps interpolate in OKLab so
+ * equal score steps look like equal colour steps.
+ *
+ * Light: pale periwinkle → Radar blue. Dark: deep indigo → cyan, Radar's "live signal".
+ */
+export type RGBA = [number, number, number, number];
+type RGB = [number, number, number];
 
 function srgbToLinear(c: number) {
   c /= 255;
@@ -17,7 +18,7 @@ function linearToSrgb(c: number) {
   const v = c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055;
   return Math.round(Math.min(1, Math.max(0, v)) * 255);
 }
-function toOklab([r, g, b]: [number, number, number]): [number, number, number] {
+function toOklab([r, g, b]: RGB): RGB {
   const [lr, lg, lb] = [srgbToLinear(r), srgbToLinear(g), srgbToLinear(b)];
   const l = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
   const m = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
@@ -28,7 +29,7 @@ function toOklab([r, g, b]: [number, number, number]): [number, number, number] 
     0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
   ];
 }
-function fromOklab([L, a, b]: [number, number, number]): [number, number, number] {
+function fromOklab([L, a, b]: RGB): RGB {
   const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
   const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
   const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
@@ -39,25 +40,61 @@ function fromOklab([L, a, b]: [number, number, number]): [number, number, number
   ];
 }
 
-const A = toOklab(PALE);
-const B = toOklab(DEEP);
-const RAMP: RGBA[] = Array.from({ length: 51 }, (_, k) => {
-  const t = k / 50;
-  const [r, g, b] = fromOklab([A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, A[2] + (B[2] - A[2]) * t]);
-  return [r, g, b, Math.round(120 + 105 * t)];
-});
+function ramp(from: RGB, to: RGB, alpha: [number, number]): RGBA[] {
+  const A = toOklab(from);
+  const B = toOklab(to);
+  return Array.from({ length: 51 }, (_, k) => {
+    const t = k / 50;
+    const [r, g, b] = fromOklab([A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, A[2] + (B[2] - A[2]) * t]);
+    return [r, g, b, Math.round(alpha[0] + (alpha[1] - alpha[0]) * t)];
+  });
+}
+
+export interface ScorePalette {
+  low: RGBA;
+  ramp: RGBA[];
+  /** evidence links: a preferred signal, an avoided one */
+  prefer: RGBA;
+  avoid: RGBA;
+  /** pin radius outline */
+  ring: RGBA;
+  ringFill: RGBA;
+  /** 3D: side walls are darker than tops */
+  selected: RGBA;
+}
+
+export const PALETTES: Record<Theme, ScorePalette> = {
+  light: {
+    low: [138, 128, 112, 26],
+    ramp: ramp([205, 210, 255], [22, 38, 255], [120, 225]),
+    prefer: [22, 38, 255, 230],
+    avoid: [255, 59, 47, 230],
+    ring: [5, 6, 8, 210],
+    ringFill: [0, 225, 240, 14],
+    selected: [5, 6, 8, 255],
+  },
+  dark: {
+    low: [236, 235, 230, 14],
+    ramp: ramp([40, 46, 170], [0, 225, 240], [110, 235]),
+    prefer: [0, 225, 240, 235],
+    avoid: [255, 95, 80, 235],
+    ring: [236, 235, 230, 190],
+    ringFill: [0, 225, 240, 18],
+    selected: [255, 255, 255, 255],
+  },
+};
 
 const NONE: RGBA = [0, 0, 0, 0];
 
-export function scoreColor(score: number): RGBA {
+export function scoreColor(score: number, palette: ScorePalette): RGBA {
   if (Number.isNaN(score)) return NONE;
-  if (score < 50) return LOW;
-  return RAMP[Math.min(50, Math.max(0, Math.round(score - 50)))];
+  if (score < 50) return palette.low;
+  return palette.ramp[Math.min(50, Math.max(0, Math.round(score - 50)))];
 }
 
-export function rampCss(): string {
+export function rampCss(palette: ScorePalette): string {
   const stops = [0, 0.25, 0.5, 0.75, 1].map((t) => {
-    const [r, g, b, a] = RAMP[Math.round(t * 50)];
+    const [r, g, b, a] = palette.ramp[Math.round(t * 50)];
     return `rgba(${r},${g},${b},${(a / 255).toFixed(2)}) ${t * 100}%`;
   });
   return `linear-gradient(90deg, ${stops.join(", ")})`;

@@ -22,6 +22,8 @@ interface Store extends PlanState {
   dialog: Dialog;
   /** bumps whenever the camera should frame the plan */
   frameRequest: number;
+  /** cells extruded by homes, camera pitched. A view preference, so it isn't in the URL. */
+  view3d: boolean;
 
   boot(): Promise<void>;
   setMetro(id: string): Promise<void>;
@@ -36,6 +38,7 @@ interface Store extends PlanState {
   focusPin(rank: number | null): void;
   open(d: Dialog): void;
   requestFrame(): void;
+  setView3d(on: boolean): void;
 }
 
 const cache = new Map<string, Metro>();
@@ -88,6 +91,7 @@ export const useStore = create<Store>((set, get) => {
     focusedPin: null,
     dialog: null,
     frameRequest: 0,
+    view3d: false,
 
     async boot() {
       const fromUrl = decode(location.hash);
@@ -175,6 +179,9 @@ export const useStore = create<Store>((set, get) => {
     },
     requestFrame() {
       set({ frameRequest: get().frameRequest + 1 });
+    },
+    setView3d(view3d) {
+      set({ view3d });
     },
   };
 });

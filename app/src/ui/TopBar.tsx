@@ -1,4 +1,5 @@
 import { useStore } from "../state/store";
+import { type ThemePref, useTheme } from "../state/theme";
 import { copy } from "./format";
 import { toast } from "./toast";
 
@@ -9,6 +10,7 @@ export function TopBar() {
   const open = useStore((s) => s.open);
   const loading = useStore((s) => s.loading);
   const plan = useStore((s) => s.plan);
+  const release = useStore((s) => s.metro?.release);
 
   return (
     <header className="top">
@@ -32,12 +34,18 @@ export function TopBar() {
           <path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
         </svg>
       </label>
+      {release && !loading && (
+        <span className="top__release" title="Every number on this page comes from this Overture Maps release">
+          <i className="live" aria-hidden="true" /> Overture {release}
+        </span>
+      )}
       {loading && (
         <span className="top__status" role="status">
           <i className="spinner" aria-hidden="true" /> Loading {loading}…
         </span>
       )}
       <nav className="top__actions" aria-label="Plan actions">
+        <ThemeToggle />
         <button type="button" className="btn btn--ghost" onClick={() => open("data")}>
           About the data
         </button>
@@ -63,5 +71,31 @@ export function Glyph({ size = 18 }: { size?: number }) {
       <circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2.4 2.2" />
       <path d="M12 6.2 17 9.1v5.8L12 17.8 7 14.9V9.1z" fill="var(--blue)" />
     </svg>
+  );
+}
+
+const THEME_LABEL: Record<ThemePref, string> = { system: "Theme: match system", light: "Theme: light", dark: "Theme: dark" };
+
+function ThemeToggle() {
+  const pref = useTheme((s) => s.pref);
+  const cycle = useTheme((s) => s.cycle);
+  return (
+    <button type="button" className="iconbtn" onClick={cycle} aria-label={`${THEME_LABEL[pref]}. Click to change.`} title={THEME_LABEL[pref]}>
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+        {pref === "light" && (
+          <g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+            <circle cx="8" cy="8" r="3" />
+            <path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" />
+          </g>
+        )}
+        {pref === "dark" && <path d="M13.2 10.1A5.6 5.6 0 0 1 5.9 2.8a5.6 5.6 0 1 0 7.3 7.3z" fill="currentColor" />}
+        {pref === "system" && (
+          <g>
+            <circle cx="8" cy="8" r="5.6" fill="none" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M8 2.4a5.6 5.6 0 0 1 0 11.2z" fill="currentColor" />
+          </g>
+        )}
+      </svg>
+    </button>
   );
 }

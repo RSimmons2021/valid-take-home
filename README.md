@@ -15,7 +15,7 @@ I picked it because the user and the workflow are concrete (paste a ZIP list int
 ## Using it
 
 1. **Pick a business.** Each profile is a starting set of weights, all visible and editable.
-2. **Say what matters.** Every factor takes one of five steps, from *avoid strongly* to *prefer strongly*. The map rescores instantly; click any cell for a verdict, the factors that pushed it, and the named Overture places behind it.
+2. **Say what matters.** Every factor takes one of five steps, from *avoid strongly* to *prefer strongly*. The map rescores instantly, with cells fading to their new colour. Click any cell for a verdict, the factors that pushed it, and the named Overture places behind it, linked on the map by lines (blue for prefer, red for avoid).
 3. **Plan.** Choose the number of pins and a radius (1 mile minimum, Meta's smallest). Pins are placed where they add the most well-fit homes not already reached. The panel reports reach, **on-target share** (how much of what you'd pay for actually fits) and **capture** (how much of the city's fit you'd reach).
 4. **Export.** ZIP list (with how much of each ZIP the pins really cover), Google's bulk radius lines, a pins CSV, or GeoJSON. The URL is the plan: copy the link and it rebuilds exactly.
 
@@ -51,6 +51,7 @@ Overture PMTiles (S3) ───────────────────�
   - Pins stay 1.5 radii apart, so each is a distinct area you can budget and switch off.
   - Ties break on cell index, so a shared link always rebuilds the same plan.
   - Scoring plus planning take under 60 ms on Chicago's 12k cells, so everything recomputes on every click.
+- **Look and motion** come from the Radar application site. The camera opens on an establishing shot, pitched over the clay city, and settles into the plan. New pins drop in with one pulse. A 3D view raises each cell by its homes. Dark mode follows the system setting (or a toggle) and turns the map into Radar's machine view, with ink land and cyan signal. The basemap is recoloured in place, with no reload. All motion is skipped under `prefers-reduced-motion`.
 - The basemap is Overture too: base, transportation, buildings and divisions PMTiles, read by range request from Overture's bucket and pinned to the same release as the numbers.
 
 ## Trade-offs and cuts
@@ -90,7 +91,7 @@ pipeline/catchment/   config (release, metros, thresholds) · extract · clean �
 pipeline/tests/       cleaning rules, classifier parity, address roll-up, ZIP backfill
 app/src/data/         file types, metro loader (typed arrays, neighbour sums, place → cell index)
 app/src/model/        factors, profiles, scoring, planner, exports (+ tests)
-app/src/map/          basemap style, colour ramp (OKLab), MapView
+app/src/map/          basemap style and themes, colour ramps (OKLab), MapView
 app/src/ui/           panels, cell card, dialogs
 ```
 
