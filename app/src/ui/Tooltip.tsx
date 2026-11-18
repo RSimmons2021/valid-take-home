@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-const SHOW_DELAY = 350; // ms before a tooltip appears on hover
-const WARM_WINDOW = 600; // moving to another tip soon after one closes shows it immediately
+const SHOW_DELAY = 800; // ms of resting on an element before its tooltip appears
+const WARM_DELAY = 250; // a shorter wait when moving straight from one tooltip to the next
+const WARM_WINDOW = 400; // how soon after a tooltip closes the next one counts as "straight from"
 const TIP_ID = "app-tooltip";
 
 interface Shown {
@@ -13,7 +14,7 @@ interface Shown {
 /**
  * One tooltip for the whole app, driven by `data-tip` attributes.
  *
- * Any element with `data-tip="…"` gets a themed tooltip on hover (after a short delay)
+ * Any element with `data-tip="…"` gets a themed tooltip once the pointer rests on it
  * and immediately on keyboard focus. While it shows, the element points at it with
  * aria-describedby, so screen readers announce the same text. Delegating from the
  * document means components only declare text, with no wrapper elements and no
@@ -62,7 +63,7 @@ export function TooltipLayer() {
       hide();
       if (!el) return;
       const warm = Date.now() - lastHidden < WARM_WINDOW;
-      timer = window.setTimeout(() => show(el), warm ? 0 : SHOW_DELAY);
+      timer = window.setTimeout(() => show(el), warm ? WARM_DELAY : SHOW_DELAY);
     };
     const onOut = (e: PointerEvent) => {
       const to = tipTarget(e.relatedTarget);
