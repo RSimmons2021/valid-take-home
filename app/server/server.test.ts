@@ -104,9 +104,16 @@ describe("pin grounding context", () => {
 describe("angle verification", () => {
   const places = pinContext(METRO, { lat: 37.7502, lon: -122.4337, radiusMi: 1, weights: { pet_life: 2 } });
   const ref = (name: string) => places.find((p) => p.name === name)!.ref;
-  const a = (headline: string, body: string, cites: string[], scene = "Golden-hour pan across a leafy dog park, a groomer's van pulls up") => ({
+  const a = (
+    headline: string,
+    body: string,
+    cites: string[],
+    scene = "Golden-hour pan across a leafy dog park, a groomer's van pulls up",
+    title = "Groomed by the park",
+  ) => ({
     angle: "Test",
     headline,
+    title,
     body,
     cites,
     scene,
@@ -135,6 +142,19 @@ describe("angle verification", () => {
   it("rejects copy over the length limits", () => {
     const raw: RawAngles = { angles: [a("Seven Hills Vet " + "x".repeat(80), "ok", [ref("Seven Hills Vet")])] };
     expect(verifyAngles(raw, places).rejected).toEqual(["over the length limit"]);
+  });
+
+  it("rejects an on-screen title a silent viewer can't read in two seconds", () => {
+    const long = "Fresh grooming every single week right next to the park";
+    const raw: RawAngles = { angles: [a("Grooming by Upper Douglass Dog Park", "We come to you.", [ref("Upper Douglass Dog Park")], undefined, long)] };
+    expect(verifyAngles(raw, places).rejected).toEqual(["title too long for a silent video"]);
+  });
+
+  it("lints the title like the rest of the copy", () => {
+    const raw: RawAngles = {
+      angles: [a("Grooming by Upper Douglass Dog Park", "We come to you.", [ref("Upper Douglass Dog Park")], undefined, "Are you a dog owner?")],
+    };
+    expect(verifyAngles(raw, places).rejected).toEqual(["addresses the reader's personal traits"]);
   });
 
   it("recognises a place by its full name or its first two words", () => {

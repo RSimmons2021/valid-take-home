@@ -25,6 +25,8 @@ export interface PlanProposal {
 export interface Angle {
   angle: string;
   headline: string;
+  /** on-screen video title, at most 8 words (absent in replies cached before it existed) */
+  title?: string;
   body: string;
   /** prompt for an AI video model: 9:16, no place names or signage */
   scene: string;
