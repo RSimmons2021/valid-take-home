@@ -72,8 +72,8 @@ const SEEN_WELCOME = "catchment.welcomed";
 const SEEN_TOUR = "catchment.toured";
 
 /**
- * TESTING ONLY: show the welcome and tour on every load, ignoring what this browser has
- * already seen. Set back to false before shipping.
+ * Development switch for rehearsing a first visit: when true, the dev server shows the
+ * welcome and tour on every load. Production builds ignore it (`import.meta.env.DEV`).
  */
 const ALWAYS_SHOW_GUIDANCE = false;
 

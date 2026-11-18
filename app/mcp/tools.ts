@@ -236,7 +236,8 @@ export function createCatchmentServer(deps: Deps): McpServer {
         balance: d.balance.map((b) => ({ covariate: b.covariate, smd: b.smd === null ? null : +b.smd.toFixed(3), verdict: b.verdict })),
         held_out_share: +d.holdoutShare.toFixed(3),
         notes: d.notes,
-        how_to_run: "Target only the test ZIPs; exclude control ZIPs from all campaigns for 2-4 weeks; lift = test conversions per home / control conversions per home - 1.",
+        how_to_run:
+          "Target only the test ZIPs and exclude the control ZIPs from every campaign. Size the test window from historical conversion volume and keep the split fixed. Lift = test conversions per home / control conversions per home - 1, pair by pair.",
       });
     },
   );
