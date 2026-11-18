@@ -54,6 +54,9 @@ function Modal({ title, onClose, children, wide }: { title: string; onClose: () 
   );
 }
 
+/** "a 7-step", "an 8-step", "an 11-step": the article follows how the number is said. */
+const tourLength = (n: number) => `${/^(8|11|18)/.test(String(n)) ? "an" : "a"} ${n}-step`;
+
 export function Dialogs() {
   const dialog = useStore((s) => s.dialog);
   const open = useStore((s) => s.open);
@@ -450,7 +453,7 @@ function WelcomeDialog({ onClose }: { onClose: () => void }) {
           ))}
         </div>
         <p className="welcome__after">
-          <span className="hand">Then a {activeSteps().length}-step tour shows you around</span> · about a minute, skippable, and the{" "}
+          <span className="hand">Then {tourLength(activeSteps().length)} tour shows you around</span> · about a minute, skippable, and the{" "}
           <b>Guide</b> button replays it.
         </p>
       </div>
