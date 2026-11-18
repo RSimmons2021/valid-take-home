@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MIN_DAILY, TITLE_WORDS, campaignKit, looksPersonal, pinsForBudget, scriptFor, splitBudget } from "./campaign";
+import { MIN_DAILY, TITLE_WORDS, campaignKit, looksPersonal, motifFor, pinsForBudget, scriptFor, splitBudget } from "./campaign";
 import type { Weights } from "./factors";
 import { planPins } from "./plan";
 import { scoreCells } from "./score";
@@ -70,6 +70,18 @@ describe("people aren't places to point at", () => {
   it("recognises practitioner listings", () => {
     for (const n of ["Melissa Weinberg, MD: Endocrinologist", "Dr. Dawn L. Rosenberg, Md", "Paws Clinic DVM", "Sam Lee, LCSW"]) expect(looksPersonal(n)).toBe(true);
     for (const n of ["Jefferson Square Park", "Joby's Dog Run Area", "Montessori House Of Children", "VIP Petcare Vaccination Clinic"]) expect(looksPersonal(n)).toBe(false);
+  });
+});
+
+describe("motifs", () => {
+  it("picks an illustration that fits the business", () => {
+    expect(motifFor("Mobile Dog Grooming")).toBe("pet");
+    expect(motifFor("Pet care")).toBe("pet");
+    expect(motifFor("Home cleaning")).toBe("clean");
+    expect(motifFor("Solar panel installer")).toBe("home");
+    expect(motifFor("Boutique pilates studio")).toBe("fitness");
+    expect(motifFor("Tutoring & childcare")).toBe("learn");
+    expect(motifFor("Bakery")).toBe("local");
   });
 });
 

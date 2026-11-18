@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import { currentBusiness, pinKey, useAi } from "../ai/store";
-import { type BudgetLine, type PinScript, pinsForBudget, scriptFor, splitBudget } from "../model/campaign";
-import { pinName } from "../model/export";
+import { sceneImage } from "../ai/client";
+import { anglesRequestFor, currentBusiness, pinKey, useAi } from "../ai/store";
+import { type BudgetLine, type PinScript, motifFor, pinsForBudget, scriptFor, splitBudget } from "../model/campaign";
 import { type LiftDesign, bestShuffle, targetUnits } from "../model/holdout";
 import type { Pin } from "../model/plan";
 import { snapshot } from "../state/history";
@@ -174,35 +174,83 @@ export const useAutopilot = create<AutopilotStore>((set, get) => {
       scripts.sort((a, b) => a.rank - b.rank);
       step("scripts", "done", byAi ? `${byAi} written by AI from verified places${byAi < scripts.length ? `, ${scripts.length - byAi} from the data` : ""}` : "Written from the data: real places, no AI");
 
-      // 5. Videos: photograph each pin, then each film is drawn on demand.
+      // 5. Videos. Two things in parallel: a scene photo per AI-written pin (the verified
+      //    angle's scene, three at a time), and a photo of each pin's neighbourhood map. Each
+      //    film is then drawn on demand. A pin without a scene photo gets its illustration.
       step("videos", "active");
       const films = new Map<number, FilmSpec>();
+      const scenes = new Map<number, HTMLImageElement>();
+      let mapsDone = 0;
+      let photosDone = 0;
+      const wantPhotos = scripts.filter((x) => x.source === "ai").length;
+      const progress = () =>
+        live() &&
+        step(
+          "videos",
+          "active",
+          `${mapsDone} of ${plan.pins.length} neighbourhoods mapped${wantPhotos ? ` · ${photosDone} of ${wantPhotos} scene photos` : ""}`,
+        );
+      const photoQueue = plan.pins.filter((pin) => scripts.find((x) => x.rank === pin.rank)?.source === "ai");
+      const shootOne = async (pin: Pin) => {
+        const req = anglesRequestFor(pin);
+        if (!req) return;
+        try {
+          const { image } = await sceneImage({ ...req, angle: 0 });
+          const img = new Image();
+          img.src = image;
+          await img.decode();
+          scenes.set(pin.rank, img);
+        } catch {
+          // no photo for this pin: its film uses the illustration
+        }
+        photosDone++;
+        progress();
+      };
+      const photos = Promise.all(
+        [0, 1, 2].map(async () => {
+          while (photoQueue.length && live()) await shootOne(photoQueue.shift()!);
+        }),
+      );
       try {
         const frames = await captureFrames(
           s2.metro!,
           s2.result!.score,
           s2.metro!.release,
           plan.pins.map((pin) => ({ pin, callouts: scripts.find((x) => x.rank === pin.rank)!.callouts })),
-          (done) => live() && step("videos", "active", `${done} of ${plan.pins.length} neighbourhoods photographed`),
+          (done) => {
+            mapsDone = done;
+            progress();
+          },
         );
+        await photos;
         if (!live()) return;
+        const motif = motifFor(business.name);
         for (const pin of plan.pins) {
           const f = frames.get(pin.rank);
           const sc = scripts.find((x) => x.rank === pin.rank)!;
           if (!f) continue;
+          const where = pin.label.hood ?? pin.label.city ?? s2.metro!.info.name;
           films.set(pin.rank, {
             ...f,
-            eyebrow: `${business.name} · ${pinName(pin.label, pin.rank)}`,
+            scene: scenes.get(pin.rank) ?? null,
+            motif,
+            eyebrow: [pin.label.hood, pin.label.city].filter(Boolean).join(" · ") || s2.metro!.info.name,
             title: sc.title,
             hook: sc.hook,
+            body: sc.body,
             business: business.name,
-            where: pin.label.hood ?? pin.label.city ?? s2.metro!.info.name,
+            where,
             stat: `${compact(pin.homes)} homes within ${pin.radiusMi} mi`,
             cta: sc.cta,
             seed: pin.cell,
           });
         }
-        step("videos", "done", `${films.size} videos · 8 s · 9:16, drawn from the real map`);
+        const shot = [...films.values()].filter((f) => f.scene).length;
+        step(
+          "videos",
+          "done",
+          `${films.size} videos · 10 s · 9:16 · ${shot ? `${shot} with AI scene photos` : "illustrated"}, the real map and real places`,
+        );
       } catch (e) {
         step("videos", "error", e instanceof Error ? e.message : "Couldn't draw the map for the videos");
       }

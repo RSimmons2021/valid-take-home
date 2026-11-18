@@ -137,6 +137,22 @@ export function scriptFor(metro: Metro, pin: Pin, weights: Weights, business: { 
   };
 }
 
+/** The illustration a video falls back to when there's no scene photo. */
+export type Motif = "pet" | "home" | "clean" | "fitness" | "learn" | "local";
+
+const MOTIFS: [RegExp, Motif][] = [
+  [/\b(dog|cat|pet|puppy|groom|vet|walker|kennel)/i, "pet"],
+  [/\b(clean|maid|janitor|wash|laundry)/i, "clean"],
+  [/\b(repair|plumb|handy|electric|roof|solar|hvac|paint|contractor|remodel|garden|landscap|home)/i, "home"],
+  [/\b(gym|fitness|yoga|pilates|train|boxing|climb|dance|studio)/i, "fitness"],
+  [/\b(tutor|school|learn|child|kid|family|class|lesson|music)/i, "learn"],
+];
+
+/** Which illustration fits a business, from its name or type. Deterministic, so videos are too. */
+export function motifFor(business: string): Motif {
+  return MOTIFS.find(([re]) => re.test(business))?.[1] ?? "local";
+}
+
 export interface KitInput {
   metro: Metro;
   plan: Plan;
@@ -187,7 +203,10 @@ export function campaignKit({ metro, plan, business, budget, monthly, scripts, l
     L.push("");
   }
   L.push("## Scripts and videos");
-  L.push(`Each video is 8 s, 9:16, made from the pin's real map and real places. The title passes the sound-off test (at most ${TITLE_WORDS} words).`);
+  L.push(`Each video is 10 s, 9:16: the service (hook), the pin's real map and real places (proof), the benefit, then the close. The title passes the sound-off test (at most ${TITLE_WORDS} words).`);
+  if (scripts.some((s) => s.source === "ai")) {
+    L.push("Scene photos are AI-generated from each angle's verified scene (no text, logos or real places). Meta may show an “AI info” label on them.");
+  }
   for (const s of scripts) {
     const pin = plan.pins.find((p) => p.rank === s.rank)!;
     L.push("");

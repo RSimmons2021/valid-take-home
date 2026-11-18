@@ -77,7 +77,7 @@ function AskView() {
         <button type="submit" className="btn btn--primary">
           Build my campaign
         </button>
-        <span className="fineprint">About {aiOn ? "a minute" : "20 seconds"}. You can close this; it keeps working.</span>
+        <span className="fineprint">About {aiOn ? "a minute or two" : "20 seconds"}. You can close this; it keeps working.</span>
       </div>
     </form>
   );
@@ -246,6 +246,18 @@ function KitView() {
                   <span className="tag" data-tip={s.source === "ai" ? "Written by AI, checked to cite only real places inside the pin" : "Written from the data: real places, no AI"}>
                     {s.source === "ai" ? "✦ AI, verified" : "from the data"}
                   </span>
+                  {film && (
+                    <span
+                      className="tag"
+                      data-tip={
+                        film.scene
+                          ? "The opening and benefit shots are an AI photo of this angle's verified scene: no text, logos or real places. Meta may label it 'AI info'."
+                          : "No scene photo here (AI off or unavailable), so the video opens on a hand-drawn illustration of the business"
+                      }
+                    >
+                      {film.scene ? "AI scene photo" : "illustrated"}
+                    </span>
+                  )}
                 </p>
                 {film && (
                   <button type="button" className="btn btn--ghost btn--sm" onClick={() => void save(s.rank, film)} disabled={progress !== undefined}>
