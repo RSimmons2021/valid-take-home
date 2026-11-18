@@ -45,7 +45,7 @@ def aggregate_addresses(con: duckdb.DuckDBPyConnection, source: str, metro: Metr
     """)
     con.sql("""
         CREATE OR REPLACE TEMP TABLE roof AS
-        SELECT h, street, number, count(*) AS n, count(unit) AS units, mode(postcode) AS zip
+        SELECT h, street, number, count(*) AS n, count(unit) AS units, mode(postcode ORDER BY postcode) AS zip
         FROM addr GROUP BY ALL
     """)
     con.sql("""
@@ -54,7 +54,7 @@ def aggregate_addresses(con: duckdb.DuckDBPyConnection, source: str, metro: Metr
                sum(n)::INT AS homes,
                count(*)::INT AS rooftops,
                count(*) FILTER (WHERE n = 1 AND units = 0)::INT AS single_rooftops,
-               mode(zip) AS zip
+               mode(zip ORDER BY zip) AS zip
         FROM roof GROUP BY h
     """)
     return {
@@ -105,7 +105,7 @@ def aggregate_places(con: duckdb.DuckDBPyConnection) -> None:
           SELECT zip FROM pz GROUP BY zip HAVING count(*) >= 20
           UNION SELECT DISTINCT left(postcode, 5) FROM addr WHERE postcode IS NOT NULL
         )
-        SELECT h, mode(zip) AS zip FROM pz WHERE zip IN (SELECT zip FROM trusted) GROUP BY h
+        SELECT h, mode(zip ORDER BY zip) AS zip FROM pz WHERE zip IN (SELECT zip FROM trusted) GROUP BY h
     """)
     con.sql("""
         CREATE OR REPLACE TEMP TABLE hex_sig AS
@@ -142,12 +142,13 @@ def label_cells(con: duckdb.DuckDBPyConnection, area_src: str, point_src: str) -
     con.sql("""
         CREATE OR REPLACE TEMP TABLE cell_hood AS
         WITH poly AS (
-          SELECT c.h, arg_min(a.name, a.rank) AS name
+          SELECT c.h, arg_min(a.name, (a.rank, a.area_m2, a.name)) AS name
           FROM cells c JOIN areas a
             ON a.rank < 3 AND ST_Contains(a.geometry, ST_Point(c.lon, c.lat))
           GROUP BY c.h
         ), near AS (
-          SELECT c.h, arg_min(p.name, ST_Distance_Sphere(ST_Point(c.lon, c.lat), ST_Point(p.lon, p.lat))) AS name
+          SELECT c.h,
+                 arg_min(p.name, (ST_Distance_Sphere(ST_Point(c.lon, c.lat), ST_Point(p.lon, p.lat)), p.name)) AS name
           FROM cells c JOIN pts p
             ON p.subtype IN ('neighborhood', 'macrohood')
            AND abs(p.lat - c.lat) < 0.018 AND abs(p.lon - c.lon) < 0.023
@@ -162,11 +163,12 @@ def label_cells(con: duckdb.DuckDBPyConnection, area_src: str, point_src: str) -
         WITH poly AS (
           -- Townships overlap the cities and villages inside them (Jefferson ⊃ part of Chicago) and
           -- carry local_type 'locality'. Prefer city > town > village > hamlet > other, then the smaller area.
-          SELECT c.h, arg_min(a.name, (a.place_rank, a.area_m2)) AS name
+          SELECT c.h, arg_min(a.name, (a.place_rank, a.area_m2, a.name)) AS name
           FROM cells c JOIN areas a ON a.rank = 3 AND ST_Contains(a.geometry, ST_Point(c.lon, c.lat))
           GROUP BY c.h
         ), near AS (
-          SELECT c.h, arg_min(p.name, ST_Distance_Sphere(ST_Point(c.lon, c.lat), ST_Point(p.lon, p.lat))) AS name
+          SELECT c.h,
+                 arg_min(p.name, (ST_Distance_Sphere(ST_Point(c.lon, c.lat), ST_Point(p.lon, p.lat)), p.name)) AS name
           FROM cells c JOIN pts p
             ON p.subtype = 'locality' AND abs(p.lat - c.lat) < 0.09 AND abs(p.lon - c.lon) < 0.11
           GROUP BY c.h
@@ -174,7 +176,7 @@ def label_cells(con: duckdb.DuckDBPyConnection, area_src: str, point_src: str) -
         -- Consolidated city-counties (Denver, San Francisco) have a county polygon but no locality one,
         -- so a county outranks the nearest locality point (which may be an enclave like Glendale).
         , county AS (
-          SELECT c.h, arg_min(a.name, a.area_m2) AS name
+          SELECT c.h, arg_min(a.name, (a.area_m2, a.name)) AS name
           FROM cells c JOIN areas a ON a.rank = 4 AND ST_Contains(a.geometry, ST_Point(c.lon, c.lat))
           GROUP BY c.h
         )
@@ -271,7 +273,7 @@ def build_metro(metro: Metro, out_dir: Path, log=print) -> dict:
         con,
         """
         SELECT id, name, confidence, brand, lon, lat, s FROM places_sig
-        WHERE s IS NOT NULL AND name IS NOT NULL ORDER BY s, confidence DESC
+        WHERE s IS NOT NULL AND name IS NOT NULL ORDER BY s, confidence DESC, id
     """,
     )
     signal_counts = {s.id: sum(sig_counts[i]) for i, s in enumerate(sig.SIGNALS)}

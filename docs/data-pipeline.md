@@ -99,7 +99,7 @@ All points are assigned to cells with `h3_latlng_to_cell_string(lat, lon, 9)` (D
 2. Otherwise the modal postcode of the cell's places, but only a *trusted* ZIP: one that appears in the address feed, or that at least 20 places in the metro agree on. Place postcodes include mailing ZIPs from other states (a New Hampshire ZIP appeared in the Bay Area before this rule).
 3. Otherwise the most common ZIP in the nearest labelled H3 ring (k = 1…3, `cells.fill_from_neighbors`).
 
-A ZIP's `homes` total is the sum of homes in the cells assigned to it, which keeps ZIP reach consistent with cell reach.
+Ties in postcode counts use the lowest postcode at each step. A ZIP's `homes` total is the sum of homes in the cells assigned to it, which keeps ZIP reach consistent with cell reach.
 
 **Neighbourhood label** (`hood`):
 1. The containing neighbourhood polygon, ranked neighbourhood > microhood > macrohood. Polygons under 0.2 km² are ignored (Overture tags plazas and pocket parks as microhoods), as are names like `Beat 2511`, `District 4`, `Ward 12` and `Precinct 3` (Chicago police beats are tagged as neighbourhoods).

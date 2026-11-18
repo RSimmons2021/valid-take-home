@@ -13,7 +13,7 @@ from catchment.aggregate import aggregate_addresses
 from catchment.cells import fill_from_neighbors, zip5
 from catchment.clean import clean_places
 from catchment.config import Metro
-from catchment.db import connect, rows
+from catchment.db import connect, rows, scalar
 
 
 def q(v) -> str:
@@ -194,6 +194,18 @@ class TestSignals:
 
 
 class TestAddresses:
+    def test_tied_postcodes_choose_the_lower_zip(self, con):
+        con.sql("""
+            CREATE TABLE a AS SELECT * FROM (VALUES
+                ('A St', '1', NULL, '94114', ST_Point(-122.4, 37.8)),
+                ('A St', '1', NULL, '94110', ST_Point(-122.4, 37.8)),
+                ('B St', '2', NULL, '94114', ST_Point(-122.4, 37.8))
+            ) t(street, number, unit, postcode, geometry)
+        """)
+        aggregate_addresses(con, "a", BOX)
+        assert scalar(con, "SELECT zip FROM roof WHERE street = 'A St'") == "94110"
+        assert scalar(con, "SELECT zip FROM hex_addr") == "94110"
+
     def test_units_count_as_homes_and_rooftops_split_houses_from_blocks(self, con):
         lon, lat = -122.4, 37.8
         pts = [("1 A St", "1", None)] + [("2 A St", "2", f"#{u}") for u in range(10)]
