@@ -71,7 +71,14 @@ interface Store extends PlanState {
 const SEEN_WELCOME = "catchment.welcomed";
 const SEEN_TOUR = "catchment.toured";
 
+/**
+ * TESTING ONLY: show the welcome and tour on every load, ignoring what this browser has
+ * already seen. Set back to false before shipping.
+ */
+const ALWAYS_SHOW_GUIDANCE = false;
+
 function remembered(key: string): boolean {
+  if (import.meta.env.DEV && ALWAYS_SHOW_GUIDANCE) return false;
   try {
     return localStorage.getItem(key) === "1";
   } catch {
