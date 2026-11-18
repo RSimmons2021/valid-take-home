@@ -334,7 +334,7 @@ function WelcomeDialog({ onClose }: { onClose: () => void }) {
             </span>
           </li>
         </ol>
-        <p className="eyebrow">Start in</p>
+        <p className="eyebrow">Pick a city to start in</p>
         <div className="welcome__metros">
           {index?.metros.map((m) => (
             <button
@@ -354,6 +354,10 @@ function WelcomeDialog({ onClose }: { onClose: () => void }) {
             </button>
           ))}
         </div>
+        <p className="welcome__after">
+          <span className="hand">Then a 6-step tour shows you around</span> · about a minute, skippable, and the <b>Guide</b> button
+          replays it.
+        </p>
       </div>
     </Modal>
   );

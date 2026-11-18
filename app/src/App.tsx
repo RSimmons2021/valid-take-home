@@ -8,6 +8,7 @@ import { CellCard } from "./ui/CellCard";
 import { Dialogs } from "./ui/Dialogs";
 import { PlanPanel } from "./ui/PlanPanel";
 import { TopBar } from "./ui/TopBar";
+import { Tour } from "./ui/tour/Tour";
 import { useToasts } from "./ui/toast";
 
 export function App() {
@@ -52,6 +53,7 @@ export function App() {
       {metro && <BusinessPanel />}
       {metro && <PlanPanel />}
       <Dialogs />
+      <Tour />
       <Toasts />
     </div>
   );

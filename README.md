@@ -14,8 +14,10 @@ I picked it because the user and the workflow are concrete (paste a ZIP list int
 
 ## Using it
 
+First-time visitors get a welcome card, then a six-step guided tour drawn in hand-written notes, arrows and circles over the real controls. It opens a live cell rather than showing screenshots, so it can't go stale. The **Guide** button replays it.
+
 1. **Pick a business.** Each profile is a starting set of weights, all visible and editable.
-2. **Say what matters.** Every factor takes one of five steps, from *avoid strongly* to *prefer strongly*. The map rescores instantly, with cells fading to their new colour. Click any cell for a verdict, the factors that pushed it, and the named Overture places behind it, linked on the map by lines (blue for prefer, red for avoid).
+2. **Say what matters.** Every factor takes one of five steps, from *avoid strongly* to *prefer strongly*. The map rescores instantly, with cells fading to their new colour. Darker blue means a better fit in both themes. Click any cell for a verdict, the factors that pushed it, and the named Overture places behind it, linked on the map by lines (blue for prefer, red for avoid).
 3. **Plan.** Choose the number of pins and a radius (1 mile minimum, Meta's smallest). Pins are placed where they add the most well-fit homes not already reached. The panel reports reach, **on-target share** (how much of what you'd pay for actually fits) and **capture** (how much of the city's fit you'd reach).
 4. **Export.** ZIP list (with how much of each ZIP the pins really cover), Google's bulk radius lines, a pins CSV, or GeoJSON. The URL is the plan: copy the link and it rebuilds exactly.
 

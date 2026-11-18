@@ -1641,3 +1641,210 @@ tr[data-out] .minibar i {
     display: none;
   }
 }
+
+/* ---------- guided tour: handwritten notes, ink that draws itself ---------- */
+:root {
+  --hand: "Caveat", "Bradley Hand", "Segoe Print", cursive;
+  --marker: #ff6a13;
+  --note: #fffdf6;
+  --dim: rgba(5, 6, 8, 0.28);
+}
+:root[data-theme="dark"] {
+  --marker: #ffb81f;
+  --note: #1a1b20;
+  --dim: rgba(0, 0, 0, 0.5);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --marker: #ffb81f;
+    --note: #1a1b20;
+    --dim: rgba(0, 0, 0, 0.5);
+  }
+}
+.hand {
+  font: 600 19px/1 var(--hand);
+  color: var(--marker);
+}
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+.tour__ink {
+  position: absolute;
+  inset: 0;
+}
+.tour__dim {
+  fill: var(--dim);
+  animation: fade-in 0.3s ease-out both;
+}
+.tour__hole {
+  transition:
+    x 0.45s cubic-bezier(0.3, 0.7, 0.2, 1),
+    y 0.45s cubic-bezier(0.3, 0.7, 0.2, 1),
+    width 0.45s cubic-bezier(0.3, 0.7, 0.2, 1),
+    height 0.45s cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Each mark is drawn like a pen stroke: pathLength=1 lets one dash cover any path. */
+.sketch {
+  fill: none;
+  stroke: var(--marker);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw var(--dur, 0.55s) cubic-bezier(0.45, 0.05, 0.3, 1) forwards;
+  animation-delay: var(--at, 0s);
+}
+.sketch--loop {
+  --dur: 0.75s;
+  --at: 0.15s;
+  stroke-width: 2.4;
+}
+.sketch--shaft {
+  --dur: 0.5s;
+  --at: 0.75s;
+}
+.sketch--ghost {
+  --at: 0.82s;
+  stroke-width: 1.2;
+  opacity: 0.55;
+}
+.sketch--head {
+  --dur: 0.22s;
+  --at: 1.22s;
+}
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.tour__note {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 300px;
+  padding: 16px 18px 14px;
+  pointer-events: auto;
+  background: var(--note);
+  border: 1px solid var(--line);
+  border-radius: 4px 14px 14px 14px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 18px 40px -16px rgba(5, 6, 8, 0.45);
+  animation: note-in 0.35s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+/* a strip of masking tape holding the note down */
+.tour__note::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 64px;
+  height: 18px;
+  transform: translateX(-50%) rotate(-3deg);
+  background: color-mix(in srgb, var(--marker) 22%, transparent);
+  border-left: 1px dashed color-mix(in srgb, var(--marker) 40%, transparent);
+  border-right: 1px dashed color-mix(in srgb, var(--marker) 40%, transparent);
+}
+@keyframes note-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+.tour__count {
+  font: 500 10.5px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--marker);
+}
+.tour__count span {
+  color: var(--muted);
+}
+.tour__title {
+  margin: 4px 0 0;
+  font: 600 30px/1.02 var(--hand);
+  letter-spacing: 0;
+  color: var(--ink);
+}
+.tour__body {
+  margin-top: 8px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.tour__actions {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tour__nav {
+  display: inline-flex;
+  gap: 4px;
+}
+.tour__skip {
+  color: var(--muted);
+}
+.tour__dots {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.tour__dots li {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  transition:
+    width 0.2s,
+    background-color 0.2s;
+}
+.tour__dots li[data-on] {
+  width: 16px;
+  border-radius: 999px;
+  background: var(--marker);
+}
+.top__guide-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  border: 1.4px solid currentColor;
+  font: 700 10.5px/1 var(--sans);
+}
+.welcome__after {
+  margin-top: 14px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+@media (max-width: 900px) {
+  .tour__note {
+    width: min(320px, calc(100vw - 28px));
+  }
+  .top__guide {
+    display: inline-flex !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sketch {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+}

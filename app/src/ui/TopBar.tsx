@@ -11,6 +11,7 @@ export function TopBar() {
   const loading = useStore((s) => s.loading);
   const plan = useStore((s) => s.plan);
   const release = useStore((s) => s.metro?.release);
+  const startTour = useStore((s) => s.startTour);
 
   return (
     <header className="top">
@@ -45,6 +46,12 @@ export function TopBar() {
         </span>
       )}
       <nav className="top__actions" aria-label="Plan actions">
+        <button type="button" className="btn btn--ghost top__guide" onClick={startTour} disabled={!release}>
+          <span className="top__guide-mark" aria-hidden="true">
+            ?
+          </span>
+          Guide
+        </button>
         <ThemeToggle />
         <button type="button" className="btn btn--ghost" onClick={() => open("data")}>
           About the data

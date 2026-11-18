@@ -24,6 +24,8 @@ interface Store extends PlanState {
   frameRequest: number;
   /** cells extruded by homes, camera pitched. A view preference, so it isn't in the URL. */
   view3d: boolean;
+  /** current step of the guided tour, or null when it isn't showing */
+  tour: number | null;
 
   boot(): Promise<void>;
   setMetro(id: string): Promise<void>;
@@ -39,6 +41,28 @@ interface Store extends PlanState {
   open(d: Dialog): void;
   requestFrame(): void;
   setView3d(on: boolean): void;
+  startTour(): void;
+  setTourStep(step: number): void;
+  endTour(): void;
+}
+
+const SEEN_WELCOME = "catchment.welcomed";
+const SEEN_TOUR = "catchment.toured";
+
+function remembered(key: string): boolean {
+  try {
+    return localStorage.getItem(key) === "1";
+  } catch {
+    return false; // storage blocked: treat as a first visit, which only means showing help again
+  }
+}
+
+function remember(key: string): void {
+  try {
+    localStorage.setItem(key, "1");
+  } catch {
+    /* ignore */
+  }
 }
 
 const cache = new Map<string, Metro>();
@@ -92,6 +116,7 @@ export const useStore = create<Store>((set, get) => {
     dialog: null,
     frameRequest: 0,
     view3d: false,
+    tour: null,
 
     async boot() {
       const fromUrl = decode(location.hash);
@@ -110,13 +135,9 @@ export const useStore = create<Store>((set, get) => {
       } catch (e) {
         set({ error: e instanceof Error ? e.message : String(e), loading: null });
       }
-      let seen = false;
-      try {
-        seen = localStorage.getItem("catchment.welcomed") === "1";
-      } catch {
-        /* storage blocked: show the welcome every time, which is harmless */
-      }
-      if (!seen && !fromUrl.metroId) set({ dialog: "welcome" });
+      // First visit, even through a shared link: a reviewer opening a plan someone sent
+      // still gets the welcome, then the guided tour.
+      if (!remembered(SEEN_WELCOME)) set({ dialog: "welcome" });
     },
 
     async setMetro(id) {
@@ -168,20 +189,29 @@ export const useStore = create<Store>((set, get) => {
       set({ focusedPin, selected: null });
     },
     open(dialog) {
-      if (get().dialog === "welcome" && dialog !== "welcome") {
-        try {
-          localStorage.setItem("catchment.welcomed", "1");
-        } catch {
-          /* ignore */
-        }
-      }
+      const closingWelcome = get().dialog === "welcome" && dialog !== "welcome";
       set({ dialog });
+      if (closingWelcome) {
+        remember(SEEN_WELCOME);
+        if (!remembered(SEEN_TOUR)) get().startTour();
+      }
     },
     requestFrame() {
       set({ frameRequest: get().frameRequest + 1 });
     },
     setView3d(view3d) {
       set({ view3d });
+    },
+    startTour() {
+      if (!get().metro) return;
+      set({ tour: 0, dialog: null, focusedPin: null });
+    },
+    setTourStep(tour) {
+      set({ tour });
+    },
+    endTour() {
+      remember(SEEN_TOUR);
+      set({ tour: null });
     },
   };
 });
