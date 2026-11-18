@@ -1,6 +1,6 @@
 """Behaviour of the cleaning, classification and aggregation rules, on small synthetic data.
 
-These run offline: each test builds a tiny table in an in-memory DuckDB.
+These run offline on tiny tables in an in-memory DuckDB.
 """
 
 from __future__ import annotations
@@ -26,9 +26,20 @@ def q(v) -> str:
 BOX = Metro("test", "Test", "CA", (-122.5, 37.7, -122.3, 37.9), (-122.4, 37.8), 12)
 
 
+@pytest.fixture(scope="module")
+def database():
+    with connect() as con:
+        yield con
+
+
 @pytest.fixture
-def con():
-    return connect()
+def con(database):
+    # Load the extensions once. Roll back table creation and data changes after each test.
+    database.begin()
+    try:
+        yield database
+    finally:
+        database.rollback()
 
 
 def make_places(con, places: list[dict]) -> str:

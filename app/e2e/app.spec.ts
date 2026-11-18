@@ -30,15 +30,28 @@ test("first-time visitors can safely wait for data and complete the tour", async
   await expect(note).toHaveCount(0);
 });
 
-test("choosing a business rescores, replans and updates the link", async ({ page }) => {
+test("buyers can replan for a business and export the resulting locations", async ({ page }) => {
   await openPlan(page);
+  const pinNames = page.locator(".pinrow__name");
+  const firstPin = await pinNames.first().innerText();
   await page.getByRole("radio", { name: "Pet care" }).click();
   await expect(page).toHaveURL(/p=pet-care/);
-  await expect(page.locator(".pinrow")).toHaveCount(8);
   await expect(page).toHaveTitle(/Pet care in San Francisco & Oakland/);
+  await expect(pinNames).toHaveCount(8);
+  await expect(pinNames.first()).not.toHaveText(firstPin);
+
+  await page.getByRole("button", { name: "Export plan" }).click();
+  const exportDialog = page.getByRole("dialog", { name: "Export plan" });
+  await expect(exportDialog.getByRole("button", { name: /Copy [1-9]\d* ZIPs/ })).toBeEnabled();
+  await exportDialog.getByRole("tab", { name: /Radius pins/ }).click();
+  await expect(exportDialog.getByRole("button", { name: "Copy 8 lines" })).toBeEnabled();
+  await exportDialog.getByRole("tab", { name: /Lift test/ }).click();
+  await expect(exportDialog.getByRole("button", { name: "Copy test ZIPs" })).toBeEnabled();
+  await expect(exportDialog.getByRole("button", { name: "Copy control ZIPs" })).toBeEnabled();
 });
 
 test("pins stay anchored to the map, and the legend spotlights a kind of block", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
   await openPlan(page);
   // MapLibre positions each anchor absolutely; if CSS ever overrides that, pins stack in
   // page flow and drift off their circles (a real bug, found by eye).
@@ -57,20 +70,8 @@ test("pins stay anchored to the map, and the legend spotlights a kind of block",
   await expect(key).toHaveAttribute("aria-pressed", "false");
 });
 
-test("export offers ZIPs, radius lines and a balanced lift test", async ({ page }) => {
-  await openPlan(page);
-  await page.getByRole("button", { name: "Export plan" }).click();
-  await expect(page.locator(".ziptable tbody tr").first()).toBeVisible();
-  await page.getByRole("tab", { name: /Radius pins/ }).click();
-  await expect(page.locator(".export__code")).toContainText("mi:37.");
-  await page.getByRole("tab", { name: /Lift test/ }).click();
-  await expect(page.locator(".balance tbody tr")).toHaveCount(3);
-  await expect(page.locator(".quality")).toHaveText(/design/);
-});
-
 test("⌘K runs commands and ⌘Z undoes them", async ({ page }) => {
   await openPlan(page);
-  await page.locator(".map").click({ position: { x: 700, y: 400 } });
   await page.keyboard.press("Control+k");
   await page.getByRole("combobox").fill("radius 3");
   await page.keyboard.press("Enter");

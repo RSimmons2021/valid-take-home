@@ -17,6 +17,7 @@ export default defineConfig({
     baseURL: "http://localhost:4174",
     ...devices["Desktop Chrome"],
     viewport: { width: 1440, height: 900 },
+    reducedMotion: "reduce",
     trace: "retain-on-failure",
   },
   projects: [

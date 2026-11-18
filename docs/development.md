@@ -32,7 +32,7 @@ npm run preview      # serve app/dist on :4173
 # pipeline
 cd pipeline
 uv sync
-uv run pytest -q                       # 28 tests, offline
+uv run pytest -q                       # pipeline tests, offline
 uv run ruff check . && uv run ruff format --check .
 uv run python -m catchment all         # extract + build all metros
 uv run python -m catchment build denver
