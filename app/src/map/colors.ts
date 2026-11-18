@@ -1,11 +1,13 @@
 import type { Theme } from "../state/theme";
 
 /**
- * Score → colour. Below the on-target line cells are a faint wash (present, not worth
- * buying); above it they ramp towards the brand colour. Ramps interpolate in OKLab so
- * equal score steps look like equal colour steps.
+ * Score → colour, with one rule in both themes: darker and more saturated means a better
+ * fit. Below the on-target line cells are a faint wash (present, not worth buying); above
+ * it they ramp from pale to deep blue. Ramps interpolate in OKLab so equal score steps look
+ * like equal colour steps.
  *
- * Light: pale periwinkle → Radar blue. Dark: deep indigo → cyan, Radar's "live signal".
+ * On the dark basemap "pale" is also translucent, so weak cells recede into the ground
+ * instead of glowing; strong cells are opaque, saturated blue.
  */
 export type RGBA = [number, number, number, number];
 type RGB = [number, number, number];
@@ -75,7 +77,7 @@ export const PALETTES: Record<Theme, ScorePalette> = {
   },
   dark: {
     low: [236, 235, 230, 14],
-    ramp: ramp([40, 46, 170], [0, 225, 240], [110, 235]),
+    ramp: ramp([196, 204, 255], [38, 56, 255], [55, 240]),
     prefer: [0, 225, 240, 235],
     avoid: [255, 95, 80, 235],
     ring: [236, 235, 230, 190],

@@ -68,12 +68,12 @@ function Legend() {
   return (
     <div className="legend">
       <span className="legend__item">
-        <i className="legend__low" aria-hidden="true" /> Below median
+        <i className="legend__low" aria-hidden="true" /> Below average
       </span>
-      <span className="legend__ramp">
-        <span>50</span>
+      <span className="legend__ramp" title="Darker blue means a better fit for your customer">
+        <span>Good fit</span>
         <i style={{ background: rampCss(PALETTES[theme]) }} aria-hidden="true" />
-        <span>100 fit</span>
+        <span>Best fit</span>
       </span>
       <span className="legend__item legend__muted">Unshaded: under {minHomes} homes</span>
       {lowUnits && (
