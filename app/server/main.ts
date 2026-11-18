@@ -20,7 +20,7 @@ import { createApi } from "./api.ts";
 import { openAiImage } from "./ai/scene.ts";
 import { DataStore } from "./data.ts";
 import { DailyBudget, LruCache, RateLimiter } from "./guards.ts";
-import { PREVIEW_MAX_BYTES, PreviewStore, sharePage } from "./share.ts";
+import { PREVIEW_MAX_BYTES, PreviewStore, escapeHtml, sharePage } from "./share.ts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = path.join(ROOT, "dist");
@@ -118,15 +118,27 @@ function sendHtml(req: IncomingMessage, res: ServerResponse, html: string, cache
 }
 
 function serveStatic(req: IncomingMessage, res: ServerResponse) {
-  const urlPath = decodeURIComponent((req.url ?? "/").split("?")[0]);
-  let file = path.normalize(path.join(DIST, urlPath));
-  if (!file.startsWith(DIST)) return send(res, 400, { error: { code: "bad_path", message: "Bad path." } });
-  if (!existsSync(file) || statSync(file).isDirectory()) file = path.join(DIST, "index.html"); // hash routing: one page
+  let urlPath: string;
+  try {
+    urlPath = decodeURIComponent((req.url ?? "/").split("?")[0]);
+  } catch {
+    return send(res, 400, { error: { code: "bad_path", message: "Invalid URL encoding." } });
+  }
+  let file = path.join(DIST, urlPath === "/" ? "index.html" : urlPath);
+  if (!file.startsWith(DIST + path.sep) || file.includes("\0")) {
+    return send(res, 400, { error: { code: "bad_path", message: "Bad path." } });
+  }
+  if (urlPath !== "/" && (!existsSync(file) || !statSync(file).isFile())) {
+    if (path.extname(urlPath) || urlPath.startsWith("/assets/") || urlPath.startsWith("/data/")) {
+      return send(res, 404, { error: { code: "not_found", message: "File not found." } });
+    }
+    file = path.join(DIST, "index.html");
+  }
   if (!existsSync(file)) return send(res, 404, { error: { code: "no_build", message: "Run `npm run build` first." } });
 
   const ext = path.extname(file);
   // Open Graph needs absolute image URLs; the built page uses a relative one so it works on any static host.
-  if (file.endsWith("index.html")) return sendHtml(req, res, readFileSync(file, "utf8").replaceAll('content="./og.png"', `content="${origin(req)}/og.png"`));
+  if (file.endsWith("index.html")) return sendHtml(req, res, readFileSync(file, "utf8").replaceAll('content="./og.png"', `content="${escapeHtml(origin(req))}/og.png"`));
   const headers: Record<string, string> = {
     "Content-Type": TYPES[ext] ?? "application/octet-stream",
     "X-Content-Type-Options": "nosniff",

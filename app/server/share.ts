@@ -35,7 +35,7 @@ export class PreviewStore {
   }
 }
 
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+export const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 /** The hash part of an app URL: only the characters our own encoder produces. */
 export function safeHash(h: string | null): string {
@@ -54,19 +54,19 @@ export function sharePage(params: URLSearchParams, origin: string, hasImage: (id
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>${esc(title)}</title>
-<meta name="description" content="${esc(description)}">
+<title>${escapeHtml(title)}</title>
+<meta name="description" content="${escapeHtml(description)}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Catchment">
-<meta property="og:title" content="${esc(title)}">
-<meta property="og:description" content="${esc(description)}">
-<meta property="og:image" content="${esc(image)}">
+<meta property="og:title" content="${escapeHtml(title)}">
+<meta property="og:description" content="${escapeHtml(description)}">
+<meta property="og:image" content="${escapeHtml(image)}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:url" content="${esc(origin + target)}">
+<meta property="og:url" content="${escapeHtml(origin + target)}">
 <meta name="twitter:card" content="summary_large_image">
-<meta http-equiv="refresh" content="0; url=${esc(target)}">
+<meta http-equiv="refresh" content="0; url=${escapeHtml(target)}">
 </head>
-<body><script>location.replace(${JSON.stringify(target)})</script><a href="${esc(target)}">Open the plan</a></body>
+<body><script>location.replace(${JSON.stringify(target)})</script><a href="${escapeHtml(target)}">Open the plan</a></body>
 </html>`;
 }

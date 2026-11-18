@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 /**
  * Cost and abuse guards for the AI endpoints. In-memory is deliberate: one small
  * instance, no shared store to run. A restart resets them, which errs on the side of
- * availability; the daily budget is the hard ceiling on spend.
+ * availability. The daily cutoff is based on recorded usage in this process.
  */
 
 /** Sliding-window limit per client: at most `max` requests in `windowMs`. */

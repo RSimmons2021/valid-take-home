@@ -112,7 +112,7 @@ Splitting the work keeps each part honest. The photo shows *the service*, which 
 | --- | --- | --- |
 | Request validation | zod schemas, 8 KB body cap | Reject junk before it costs anything |
 | Rate limit | 12 AI calls per client per 5 min (sliding window, client = first `X-Forwarded-For` hop) | Stop a loop or a bot from draining the key |
-| Daily budget | `AI_DAILY_BUDGET_USD`, default $3, estimated from usage × price | A hard ceiling on spend for a public demo. Non-AI features keep working when it's reached. |
+| Daily budget | `AI_DAILY_BUDGET_USD`, default $3, estimated from usage × price | A per-process cutoff based on completed calls. In-flight calls can finish above it and restarts reset the counter. |
 | Cache | LRU, 300 entries, key = route + canonical JSON | Repeat demos are instant and free. Cached answers skip the limit and budget. |
 | Timeouts | 25 s server-side (1 SDK retry), 40 s client-side, Cancel button | A slow call never hangs the UI |
 | Retention | `store: false` on every call | Briefs aren't stored for later retrieval through the API |
