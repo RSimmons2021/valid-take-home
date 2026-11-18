@@ -509,7 +509,8 @@ p {
   border-color: var(--line-strong);
   color: var(--ink);
 }
-.profile[aria-checked="true"] {
+.profile[aria-checked="true"],
+.profile[aria-pressed="true"] {
   background: var(--solid);
   border-color: var(--solid);
   color: var(--on-solid);
