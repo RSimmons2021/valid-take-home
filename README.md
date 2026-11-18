@@ -86,6 +86,10 @@ npm run build                             # static site in app/dist
 
 Deploys as a static site. `render.yaml` describes the Render setup, and any static host works.
 
+## Documentation
+
+Full docs are in [`docs/`](docs/README.md): [architecture](docs/architecture.md), [data pipeline](docs/data-pipeline.md), [data format](docs/data-format.md), [scoring and planning](docs/scoring-and-planning.md), [frontend](docs/frontend.md), [decisions](docs/decisions.md) and [development](docs/development.md). Coding agents should start with [`AGENTS.md`](AGENTS.md).
+
 ## Layout
 
 ```
