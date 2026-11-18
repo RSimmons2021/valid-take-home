@@ -8,6 +8,7 @@
 | npm | 10+ | the app (lockfile is `app/package-lock.json`) |
 | Python | 3.12+ | the pipeline |
 | [uv](https://docs.astral.sh/uv/) | latest | Python env and lockfile (`pipeline/uv.lock`) |
+| OpenAI API key | optional | AI features; put `OPENAI_API_KEY=…` in the repo-root `.env` (gitignored; see `.env.example`) |
 
 The pipeline is only needed to change data. The app builds from the committed files in `app/public/data/`.
 
@@ -17,10 +18,12 @@ The pipeline is only needed to change data. The app builds from the committed fi
 # app
 cd app
 npm ci
-npm run dev          # http://localhost:5173
-npm test             # vitest: model + sketch tests (24)
+npm run dev          # http://localhost:5173 (proxies /api to :8787)
+npm run dev:server   # AI + static server on :8787, reads ../.env, restarts on change
+npm start            # production server: serves dist/ and /api
+npm test             # vitest: model, sketch and server tests (46)
 npm run typecheck    # tsc -b
-npm run lint         # oxlint src
+npm run lint         # oxlint src server
 npm run build        # static site → app/dist (relative base, deployable anywhere)
 npm run preview      # serve app/dist on :4173
 
@@ -37,16 +40,19 @@ CI (`.github/workflows/ci.yml`) runs exactly these checks on every push and PR: 
 
 ## Deploying
 
-`render.yaml` describes a Render static site:
+`render.yaml` describes a Render **web service**: one Node process serving the app and the AI API.
 
 | Setting | Value |
 | --- | --- |
 | Root | `app/` |
 | Build | `npm ci && npm run build` |
-| Publish directory | `dist` |
-| Caching | `/assets/*` immutable for a year, `/data/*` for an hour |
+| Start | `npm start` (`node server/main.ts`) |
+| Health check | `/api/health` |
+| Environment | `NODE_VERSION=22.22.0`, `OPENAI_API_KEY` (set it in the dashboard, never in the file), `AI_DAILY_BUDGET_USD=3` |
 
-Any static host works: the build uses a relative base (`./`), and all routing is in the URL hash.
+The server sets cache headers itself: `/assets/*` immutable, `/data/*` for an hour, the page always revalidated. It also gzips text responses.
+
+**Static hosting still works** (`app/dist` on any static host). The AI health check fails, the AI controls hide, and everything else behaves the same.
 
 ## Testing first-visit behaviour
 
@@ -87,4 +93,6 @@ A private window works too.
 | DuckDB `Relations no longer have fetchone()` | DuckDB 2.0: use `con.sql(q).fetchall()` or the `rows`/`scalar` helpers. |
 | Extraction fails with `Could not resolve hostname` | Transient DNS or S3 hiccup. Re-run: finished layers are cached and skipped. |
 | Map labels missing | The glyph host (`protomaps.github.io`) is unreachable. Data layers still work. |
+| No "Describe your business" box | `/api/health` reports `ai: false`: the server isn't running (`npm run dev:server`), or `OPENAI_API_KEY` is missing from `../.env`. |
+| AI answers look stale after editing a prompt | The server caches responses by request. Restart it (the cache is in memory), or click Regenerate for angles. |
 | A metro shows few ZIPs or odd labels | Check the build log's ledger and `units_per_rooftop`, and read [data-pipeline.md §6](data-pipeline.md#6-data-realities-found-while-building). |

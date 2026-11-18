@@ -4,7 +4,7 @@ Orientation for coding agents working in this repo. Humans: start with [README.m
 
 ## What this is
 
-Catchment is a geo-targeting planner for local-service ads, built on Overture Maps data. A Python pipeline (`pipeline/`) extracts and aggregates Overture data to H3 cells and writes `app/public/data/<metro>.json`. A static React app (`app/`) scores cells, places radius pins and exports ZIPs and pins, all in the browser. There is no backend.
+Catchment is a geo-targeting planner for local-service ads, built on Overture Maps data. A Python pipeline (`pipeline/`) extracts and aggregates Overture data to H3 cells and writes `app/public/data/<metro>.json`. A React app (`app/`) scores cells, places radius pins and exports ZIPs and pins, all in the browser. A small Node server (`app/server/`) serves the build and an AI API (`gpt-6.1-terra`) for brief → plan and grounded ad angles.
 
 ## Where things are
 
@@ -19,12 +19,15 @@ Catchment is a geo-targeting planner for local-service ads, built on Overture Ma
 | App state and URL | `app/src/state/` |
 | Map rendering | `app/src/map/` |
 | UI components, tour, tooltips, select | `app/src/ui/` |
+| AI server: prompts, schemas, validation, guards | `app/server/` (see `docs/ai.md`) |
+| AI client, store, brief box | `app/src/ai/` |
 | Why something is the way it is | `docs/decisions.md` |
 
 ## Commands
 
 ```bash
 cd app && npm ci && npm test && npm run typecheck && npm run lint && npm run build
+cd app && npm run dev:server   # AI server on :8787 (needs OPENAI_API_KEY in ../.env)
 cd pipeline && uv sync && uv run pytest -q && uv run ruff check . && uv run ruff format --check .
 cd pipeline && uv run python -m catchment build <metro>   # rebuild data from cache
 ```
@@ -42,6 +45,9 @@ Run the checks for whichever side you touched before finishing. CI runs all of t
 7. **Explanatory text uses `data-tip`, not `title`.** Dropdowns use `ui/Select.tsx`, not native `<select>`.
 8. **Respect `prefers-reduced-motion`** for any new animation.
 9. **`maplibre-gl` stays on v5** until deck.gl's interleaved mode supports v6.
+10. **The OpenAI key is server-only.** Read it in `app/server/` only, never with a `VITE_` prefix, and never commit `.env`.
+11. **AI proposes inputs, never outputs.** Models may suggest weights or wording; scores, pins and exports stay deterministic. New AI routes go through `guarded()` in `server/api.ts` (validation, cache, rate limit, budget) and use schema enums wherever the answer must come from a known set.
+12. **Ad copy is grounded.** Angles may only cite server-chosen places, and they must pass `verifyAngles`. Don't loosen this to make the copy "better".
 
 ## Gotchas
 

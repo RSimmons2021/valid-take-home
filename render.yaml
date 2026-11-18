@@ -1,14 +1,19 @@
+# Catchment on Render: one small Node web service that serves the built app and the AI API.
+# Set OPENAI_API_KEY in the Render dashboard (never in this file). Without it the app still
+# works; the AI controls hide themselves.
 services:
   - type: web
     name: catchment
-    runtime: static
+    runtime: node
     rootDir: app
+    plan: free
     buildCommand: npm ci && npm run build
-    staticPublishPath: dist
-    headers:
-      - path: /assets/*
-        name: Cache-Control
-        value: public, max-age=31536000, immutable
-      - path: /data/*
-        name: Cache-Control
-        value: public, max-age=3600
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AI_DAILY_BUDGET_USD
+        value: "3"

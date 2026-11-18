@@ -2,10 +2,11 @@
 
 Catchment is a geo-targeting planner for local-service advertising. It turns [Overture Maps](https://overturemaps.org) open data into a score for every ~0.1 km² block of a city ("is this where my customer lives?"), places radius pins where they reach the most well-matched homes, and exports ZIP lists and pins for Meta and Google Ads.
 
-The project has two halves that meet at one file per metro:
+The project has three parts. The first two meet at one file per metro:
 
 - **`pipeline/`** (Python, DuckDB) reads Overture once, cleans it, and rolls it up to H3 cells.
-- **`app/`** (React, TypeScript, MapLibre, deck.gl) loads those files and does all scoring, planning and exporting in the browser. There is no backend.
+- **`app/`** (React, TypeScript, MapLibre, deck.gl) loads those files and does all scoring, planning and exporting in the browser.
+- **`app/server/`** (Node) serves the built app and a small AI API (`gpt-6.1-terra`). It turns a plain-language business description into weights, and writes local ad angles grounded in the places inside a pin. The key stays on the server, and the app works without it.
 
 ## Read in this order
 
@@ -16,6 +17,7 @@ The project has two halves that meet at one file per metro:
 | Read or produce the metro data files | [data-format.md](data-format.md) |
 | Understand how a score and a plan are computed | [scoring-and-planning.md](scoring-and-planning.md) |
 | Work on the interface | [frontend.md](frontend.md) |
+| Understand or extend the AI features | [ai.md](ai.md) |
 | Know *why* something is the way it is | [decisions.md](decisions.md) |
 | Run, test, deploy or extend it | [development.md](development.md) |
 

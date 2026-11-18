@@ -25,13 +25,15 @@
 | `src/ui/Select.tsx` | Themed, accessible listbox (replaces native `<select>`) |
 | `src/ui/Tooltip.tsx` | App-wide tooltip driven by `data-tip` attributes |
 | `src/ui/tour/` | Guided tour: steps, overlay, hand-drawn SVG generator |
+| `src/ai/` | AI client (`client.ts`), AI store with undo (`store.ts`), the "Describe your business" box (`BriefBox.tsx`) |
+| `src/ui/PinCard.tsx` | One pin's reach and its local ad angles (shares the cell card's slot) |
 | `src/styles.css` | Design tokens (light and dark) and all component styles |
 
 ## State (`state/store.ts`)
 
 One zustand store holds three kinds of state:
 
-- **Plan inputs** (`PlanState`, mirrored in the URL): `metroId`, `profileId`, `weights`, `minHomes`, `pins`, `radiusMi`.
+- **Plan inputs** (`PlanState`, mirrored in the URL): `metroId`, `profileId` (a preset id, or `custom` for AI-applied or hand-built weights), `weights`, `minHomes`, `pins`, `radiusMi`.
 - **Derived results**: `metro` (a loaded `Metro`), `result` (`ScoreResult`), `plan` (`Plan`).
 - **UI state**: `hovered`, `selected`, `focusedPin`, `dialog`, `view3d`, `tour`, `loading`, `error`, `frameRequest`.
 
@@ -129,6 +131,15 @@ A themed replacement for `<select>`, used for the metro picker (top bar, `varian
 - **Keyboard.** Arrows, Home/End, type-ahead, Enter/Space to choose, Escape to close (without also clearing the map selection), Tab to close and move on.
 - **Placement.** The menu is portalled to `<body>` with fixed positioning, so the scrolling panel can't clip it. It opens upwards when there isn't room below.
 - **Options** can carry a `detail` line.
+
+## AI UI
+
+See [ai.md](ai.md) for the server side.
+
+- `useAi.checkHealth()` runs at boot. The brief box, the angles section and the AI tour step render only when it reports `ai: true`.
+- **Brief box.** Example chips, a character counter, Ctrl/⌘+Enter to submit, a Cancel button (aborts the fetch), shimmer loading, and a proposal card with Apply and Discard. Apply calls `store.setWeights(weights, "custom")` and keeps the previous weights for **Undo**. While a factor's weight is still the one the model suggested, its row shows the model's reason in place of the static description.
+- **Pin card.** It opens when a pin is focused (from the list or its marker). It shows the pin's homes, on-target share, fit and rank, then **Write 3 angles**. Results show the angle type, headline, body, verified place chips (✓, with the GERS ID in a tooltip), Copy, Regenerate, and a footer with the grounding count, rejected drafts and cost. Angles are stored per pin + radius + weights.
+- Every AI result shows its provenance: model, seconds, cost, and "schema-checked" or "grounded in N places".
 
 ## Accessibility checklist (what's in place)
 

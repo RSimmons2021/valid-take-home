@@ -106,3 +106,39 @@ Radar's literal cursor lens was left out, because on a planning tool hiding part
 ### 19. Own the select and tooltip components
 
 **Why.** Native `<select>` menus and `title` tooltips are drawn by the OS. They ignore the app's type, colour and dark mode, and `title` is unreliable for keyboard and screen-reader users. Both components follow WAI-ARIA patterns.
+
+### 20. AI proposes inputs; the engine computes; the user approves
+
+**Context.** Adding `gpt-6.1-terra` to a planning tool whose value is trustworthy numbers.
+**Decision.**
+- Brief → plan returns *weights with reasons*, shown as a diff the user applies and can undo.
+- Ad angles return *wording* only.
+- Neither touches scores, pins or exports.
+
+**Why.** It keeps every number reproducible and explainable, and keeps a shared link working without any AI call. It turns the model's strength (judgement from language) into a structured input, instead of asking it for a number it can't justify.
+
+### 21. A small server instead of a client-side key
+
+**Context.** The app was static, and an API key in the browser is public.
+**Decision.** A Node server serves `dist/` and `/api`. It runs TypeScript directly on Node 22.18+, with no build step. Render becomes a web service.
+**Cost.** One process to run. Mitigated by graceful degradation: without the server or key, the AI controls simply don't render.
+
+### 22. Grounding by construction, then verification
+
+**Decision.**
+- The server chooses the places an ad may mention.
+- The response schema restricts citations to those refs.
+- Every angle must name a cited place and pass a lint, and failures are dropped and reported.
+- Competitor places are never offered.
+
+**Why.** Prompting alone ("only use these places") is a request, not a guarantee. Schema enums plus a post-check make invented places impossible to ship.
+
+### 23. Spend and abuse controls on a public demo
+
+**Decision.** A per-client rate limit, a daily budget estimated from token usage, an LRU cache, timeouts, `store: false`, and logs with no user text.
+**Why.** A reviewer will share the link. A runaway loop or a bot must not drain the key, and a cached answer should cost nothing.
+
+### 24. The AI copy follows ad policy, not just style
+
+**Decision.** The angle lint rejects personal-trait phrasing ("Are you a dog owner?"), which Meta's personal-attributes policy disallows, as well as emoji and hashtags.
+**Why.** Copy that gets an ad rejected is worse than no copy. The rule is enforced in code, not left to the prompt.

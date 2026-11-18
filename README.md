@@ -21,6 +21,15 @@ First-time visitors get a welcome card, then a six-step guided tour drawn in han
 3. **Plan.** Choose the number of pins and a radius (1 mile minimum, Meta's smallest). Pins are placed where they add the most well-fit homes not already reached. The panel reports reach, **on-target share** (how much of what you'd pay for actually fits) and **capture** (how much of the city's fit you'd reach).
 4. **Export.** ZIP list (with how much of each ZIP the pins really cover), Google's bulk radius lines, a pins CSV, or GeoJSON. The URL is the plan: copy the link and it rebuilds exactly.
 
+## AI features (optional)
+
+With an `OPENAI_API_KEY`, the app adds two `gpt-6.1-terra` features. Both are built so the model proposes, the engine decides, and the user approves:
+
+- **Describe your business.** Plain words in, a reviewable set of weights out, each with a reason. Apply it (and undo it) like any other change. The scores and pins still come from the deterministic engine.
+- **Local ad angles per pin.** Three hooks written only from real Overture places inside the pin. The server chooses the places, the schema restricts citations to them, and each hook is checked to name a cited place and to avoid personal-trait phrasing that Meta's ad policy disallows. Competitors are never mentioned.
+
+The key stays on a small Node server, behind rate limits, a daily budget, a response cache and timeouts. Each result shows its cost (about $0.002). Without a key, the AI controls simply don't appear. Details are in [docs/ai.md](docs/ai.md).
+
 ## How it works
 
 ```
@@ -80,15 +89,16 @@ uv run pytest && uv run ruff check .
 cd app
 npm ci
 npm run dev                               # http://localhost:5173
+npm run dev:server                        # optional: AI + API on :8787 (needs OPENAI_API_KEY in ../.env)
 npm test && npm run typecheck && npm run lint
 npm run build                             # static site in app/dist
 ```
 
-Deploys as a static site. `render.yaml` describes the Render setup, and any static host works.
+Deploys as one small Node web service (`render.yaml`: `npm start`, with `OPENAI_API_KEY` set in the host's dashboard). Without the server, `app/dist` still works on any static host, minus the AI features.
 
 ## Documentation
 
-Full docs are in [`docs/`](docs/README.md): [architecture](docs/architecture.md), [data pipeline](docs/data-pipeline.md), [data format](docs/data-format.md), [scoring and planning](docs/scoring-and-planning.md), [frontend](docs/frontend.md), [decisions](docs/decisions.md) and [development](docs/development.md). Coding agents should start with [`AGENTS.md`](AGENTS.md).
+Full docs are in [`docs/`](docs/README.md): [architecture](docs/architecture.md), [AI](docs/ai.md), [data pipeline](docs/data-pipeline.md), [data format](docs/data-format.md), [scoring and planning](docs/scoring-and-planning.md), [frontend](docs/frontend.md), [decisions](docs/decisions.md) and [development](docs/development.md). Coding agents should start with [`AGENTS.md`](AGENTS.md).
 
 ## Layout
 
