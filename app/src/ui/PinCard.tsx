@@ -1,5 +1,6 @@
 import { usageLine } from "../ai/client";
 import { currentBusiness, pinKey, useAi } from "../ai/store";
+import { type ChangedPlace, pinChanges, releaseLabel } from "../model/changes";
 import { pinName } from "../model/export";
 import { useStore } from "../state/store";
 import { compact, copy, pct } from "./format";
@@ -13,7 +14,8 @@ export function PinCard() {
   const plan = useStore((s) => s.plan);
   const focusedPin = useStore((s) => s.focusedPin);
   const focusPin = useStore((s) => s.focusPin);
-  useStore((s) => s.weights); // re-render when targeting changes: angles are keyed on it
+  const weights = useStore((s) => s.weights); // angles and changes depend on targeting
+  const metro = useStore((s) => s.metro);
   const ai = useAi();
 
   const pin = plan?.pins.find((p) => p.rank === focusedPin);
@@ -23,6 +25,7 @@ export function PinCard() {
   const data = entry?.data;
   const loading = entry?.status === "loading";
   const business = currentBusiness();
+  const changes = metro ? pinChanges(metro, pin, weights) : null;
 
   return (
     <aside className="card card--pin" aria-labelledby="pin-title">
@@ -53,6 +56,28 @@ export function PinCard() {
           <dd>#{pin.rank}</dd>
         </div>
       </dl>
+
+      {changes && (
+        <section className="changes-since" aria-labelledby="changes-title">
+          <p
+            className="eyebrow"
+            id="changes-title"
+            data-tip={`Matched by Overture GERS id against the ${releaseLabel(changes.since)} release. "New" means new to Overture: a new business, or one a new data source added.`}
+          >
+            Since {releaseLabel(changes.since)}
+          </p>
+          {changes.newCompetitors.length + changes.lostDemand.length + changes.newDemand.length + changes.closedCompetitors.length === 0 ? (
+            <p className="hint">No changes to the places you weighted inside this pin.</p>
+          ) : (
+            <ul className="since">
+              <ChangeRows kind="alert" verb="new" places={changes.newCompetitors} />
+              <ChangeRows kind="alert" verb="closed" places={changes.lostDemand} />
+              <ChangeRows kind="good" verb="new" places={changes.newDemand} />
+              <ChangeRows kind="good" verb="closed" places={changes.closedCompetitors} />
+            </ul>
+          )}
+        </section>
+      )}
 
       {ai.available && (
         <section className="angles" aria-labelledby="angles-title">
@@ -141,4 +166,34 @@ export function PinCard() {
       )}
     </aside>
   );
+}
+
+/** One row per signal: "2 new Pet sitters & boarding listings", "1 Pet owners nearby place marked closed". */
+function ChangeRows({ kind, verb, places }: { kind: "alert" | "good"; verb: "new" | "closed"; places: ChangedPlace[] }) {
+  const groups = new Map<string, ChangedPlace[]>();
+  for (const p of places) groups.set(p.signalLabel, [...(groups.get(p.signalLabel) ?? []), p]);
+  return [...groups.entries()].map(([signal, list]) => (
+    <li key={`${verb}${signal}`} className={`since__row since__row--${kind}`}>
+      <span className="since__count">{list.length}</span>
+      <span>
+        {verb === "new" ? (
+          <>
+            new <b>{signal}</b> listing{list.length > 1 ? "s" : ""}
+          </>
+        ) : (
+          <>
+            <b>{signal}</b> {list.length > 1 ? "places" : "place"} marked closed
+          </>
+        )}
+        <span className="since__names">
+          {list.slice(0, 3).map((p) => (
+            <span key={p.id} className="placechip" data-tip={`GERS ${p.id.slice(0, 8)}…`}>
+              {p.name}
+            </span>
+          ))}
+          {list.length > 3 && <span className="muted">+{list.length - 3}</span>}
+        </span>
+      </span>
+    </li>
+  ));
 }

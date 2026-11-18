@@ -16,8 +16,9 @@ import duckdb
 from . import signals as sig
 from .cells import fill_from_neighbors, zip5
 from .clean import clean_places
-from .config import H3_RES, RELEASE, SCHEMA, Metro
+from .config import H3_RES, PREVIOUS_RELEASE, RELEASE, SCHEMA, Metro
 from .db import connect, rows, scalar
+from .diff import release_diff
 from .extract import raw_path
 
 
@@ -216,6 +217,11 @@ def build_metro(metro: Metro, out_dir: Path, log=print) -> dict:
     bld = aggregate_buildings(con, src("building"), metro)
     log(f"  buildings  {bld['in_metro']:>9,}")
     aggregate_places(con)
+    prev = raw_path(metro, "place_prev")
+    changes = release_diff(con, f"read_parquet('{prev}')") if prev.exists() else None
+    if changes:
+        t = changes["totals"]
+        log(f"  changes    +{t['new_ids']:,} new ids, {t['newly_closed']:,} newly closed since {PREVIOUS_RELEASE}")
     label_cells(con, src("division_area"), src("division"))
 
     cells = rows(
@@ -294,6 +300,7 @@ def build_metro(metro: Metro, out_dir: Path, log=print) -> dict:
         "names": names.values,
         "zips": [{"code": z, "homes": zip_homes.get(z, 0)} for z in zips.values],
         "hexes": hexes,
+        "changes": None if changes is None else {"since": PREVIOUS_RELEASE, **changes},
         "places": {
             "id": [p["id"] for p in places],
             "name": [p["name"] for p in places],

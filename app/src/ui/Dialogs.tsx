@@ -296,6 +296,12 @@ function DataDialog({ onClose }: { onClose: () => void }) {
               </li>
             ))}
           </ul>
+          {metro.file.changes && (
+            <p className="hint">
+              Since the {metro.file.changes.since} release: {int(metro.file.changes.totals.new_ids)} new place ids kept,{" "}
+              {int(metro.file.changes.totals.newly_closed)} places newly marked closed (matched by GERS id).
+            </p>
+          )}
           <p className="hint">Places map to signals through Overture's new taxonomy (basic_category and taxonomy.primary), not the removed categories field.</p>
         </section>
       </div>

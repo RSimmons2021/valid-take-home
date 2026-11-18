@@ -2531,3 +2531,57 @@ dt[data-tip] {
   border: 1.5px solid rgb(255, 160, 0);
   margin-left: 4px;
 }
+
+/* ---------- since last release ---------- */
+.changes-since {
+  margin-top: 14px;
+}
+.since {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 12.5px;
+}
+.since__row {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+.since__count {
+  display: grid;
+  place-items: center;
+  height: 20px;
+  border-radius: 6px;
+  font: 600 11px var(--mono);
+}
+.since__row--alert .since__count {
+  background: color-mix(in srgb, var(--red) 16%, transparent);
+  color: var(--danger-ink);
+}
+.since__row--good .since__count {
+  background: color-mix(in srgb, var(--green) 16%, transparent);
+  color: var(--green);
+}
+.since__names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.pinrow {
+  grid-template-columns: 26px 1fr auto auto;
+}
+.pinrow__alert {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--red) 16%, transparent);
+  color: var(--danger-ink);
+  font: 600 10px var(--mono);
+}

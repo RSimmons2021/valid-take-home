@@ -22,6 +22,13 @@ export interface MetroFile {
     city: number[];
     signals: Record<string, number[]>;
   };
+  /** places that changed since the previous Overture release, matched by GERS id (null if not built) */
+  changes?: {
+    since: string;
+    added: ChangedPlaces;
+    closed: ChangedPlaces;
+    totals: { new_ids: number; newly_closed: number };
+  } | null;
   places: {
     id: string[];
     name: string[];
@@ -31,6 +38,14 @@ export interface MetroFile {
     lon: number[];
     lat: number[];
   };
+}
+
+export interface ChangedPlaces {
+  id: string[];
+  name: string[];
+  signal: number[];
+  lon: number[];
+  lat: number[];
 }
 
 export interface MetroInfo {

@@ -240,3 +240,48 @@ class TestCells:
         a = h3.latlng_to_cell(37.8, -122.4, 9)
         b = h3.latlng_to_cell(40.0, -100.0, 9)
         assert fill_from_neighbors([a, b], [None, "94110"]) == [None, "94110"]
+
+
+class TestReleaseDiff:
+    def test_added_and_newly_closed_by_gers_id(self, con):
+        from catchment.aggregate import aggregate_places
+        from catchment.diff import release_diff
+
+        src = make_places(
+            con,
+            [
+                {"id": "old", "name": "Old Vet", "lon": -122.40, "lat": 37.80, "primary": "veterinarian", "basic": "x"},
+                {"id": "new", "name": "New Vet", "lon": -122.41, "lat": 37.80, "primary": "veterinarian", "basic": "x"},
+                {
+                    "id": "shut",
+                    "name": "Shut Vet",
+                    "lon": -122.42,
+                    "lat": 37.80,
+                    "primary": "veterinarian",
+                    "basic": "x",
+                    "status": "permanently_closed",
+                },
+                {
+                    "id": "was_shut",
+                    "name": "Long Gone Vet",
+                    "lon": -122.43,
+                    "lat": 37.80,
+                    "primary": "veterinarian",
+                    "basic": "x",
+                    "status": "permanently_closed",
+                },
+            ],
+        )
+        clean_places(con, src, BOX)
+        con.sql("ALTER TABLE places ADD COLUMN postcode VARCHAR")
+        con.sql("CREATE TEMP TABLE addr (postcode VARCHAR)")  # aggregate_places checks place ZIPs against addresses
+        aggregate_places(con)
+        con.sql(
+            "CREATE TABLE prev_src AS SELECT * FROM (VALUES ('old', 'open'), ('shut', 'open'), "
+            "('was_shut', 'permanently_closed')) t(id, operating_status)"
+        )
+        d = release_diff(con, "prev_src")
+        assert d["added"]["name"] == ["New Vet"]  # absent last release, kept now
+        assert d["closed"]["name"] == ["Shut Vet"]  # open then, closed now; already-closed isn't news
+        assert d["totals"] == {"new_ids": 1, "newly_closed": 1}
+        assert sig.SIGNALS[d["added"]["signal"][0]].id == "pet_life"

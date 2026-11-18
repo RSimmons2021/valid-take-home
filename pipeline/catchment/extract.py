@@ -10,7 +10,7 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from .config import S3_ROOT, Metro
+from .config import PREVIOUS_S3_ROOT, S3_ROOT, Metro
 from .db import connect, scalar
 
 RAW = Path(__file__).resolve().parent.parent / "data" / "raw"
@@ -77,4 +77,21 @@ def extract(metro: Metro, force: bool = False, log=print) -> dict[str, int]:
         tmp.replace(dest)  # never leave a half-written cache behind
         counts[typ] = scalar(con, f"SELECT count(*) FROM '{dest}'")
         log(f"  {typ:<14} fetched {counts[typ]:>9,}  in {time.time() - t0:.0f}s")
+
+    # Previous release: only what the diff needs (id and status), so it stays small.
+    dest = RAW / metro.id / "place_prev.parquet"
+    if dest.exists() and not force:
+        counts["place_prev"] = scalar(con, f"SELECT count(*) FROM '{dest}'")
+        log(f"  {'place_prev':<14} cached  {counts['place_prev']:>9,}")
+    else:
+        tmp = dest.with_suffix(".tmp.parquet")
+        t0 = time.time()
+        con.sql(
+            "COPY (SELECT id, operating_status, confidence "
+            f"FROM read_parquet('{PREVIOUS_S3_ROOT}/theme=places/type=place/*') "
+            f"WHERE {metro.where}) TO '{tmp}' (FORMAT parquet, COMPRESSION zstd)"
+        )
+        tmp.replace(dest)
+        counts["place_prev"] = scalar(con, f"SELECT count(*) FROM '{dest}'")
+        log(f"  {'place_prev':<14} fetched {counts['place_prev']:>9,}  in {time.time() - t0:.0f}s")
     return counts

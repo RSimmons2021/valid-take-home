@@ -11,6 +11,10 @@ RELEASE = "2026-10-21.0"
 SCHEMA = "2.0.0"
 S3_ROOT = f"s3://overturemaps-us-west-2/release/{RELEASE}"
 
+# The release before RELEASE. Places are diffed against it by GERS id ("what changed in my pins").
+PREVIOUS_RELEASE = "2026-09-23.0"
+PREVIOUS_S3_ROOT = f"s3://overturemaps-us-west-2/release/{PREVIOUS_RELEASE}"
+
 # H3 resolution 9: ~0.1 km² cells, ~175 m edge. Small enough to see a block-level
 # difference, large enough that a cell usually holds dozens of addresses.
 H3_RES = 9

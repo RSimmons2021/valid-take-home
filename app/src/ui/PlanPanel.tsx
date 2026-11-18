@@ -1,4 +1,5 @@
 import { MAX_PINS, RADIUS_OPTIONS_MI } from "../model/plan";
+import { pinChanges, releaseLabel } from "../model/changes";
 import { pinName } from "../model/export";
 import { useStore } from "../state/store";
 import { compact, int, pct } from "./format";
@@ -9,6 +10,7 @@ export function PlanPanel() {
   const pins = useStore((s) => s.pins);
   const radiusMi = useStore((s) => s.radiusMi);
   const focusedPin = useStore((s) => s.focusedPin);
+  const weights = useStore((s) => s.weights);
   const { setPins, setRadius, focusPin, open, requestFrame } = useStore.getState();
 
   const onShare = plan && plan.homes ? plan.onTargetHomes / plan.homes : 0;
@@ -105,6 +107,7 @@ export function PlanPanel() {
             <ol className="pins">
               {plan.pins.map((p) => {
                 const on = p.homes ? p.onTargetHomes / p.homes : 0;
+                const ch = metro ? pinChanges(metro, p, weights) : null;
                 return (
                   <li key={p.rank}>
                     <button
@@ -120,6 +123,19 @@ export function PlanPanel() {
                           {p.label.zip ?? "no ZIP"} · {compact(p.homes)} homes · {pct(on)} on target
                         </span>
                       </span>
+                      {ch && ch.alerts > 0 && (
+                        <span
+                          className="pinrow__alert"
+                          data-tip={`Since ${releaseLabel(ch.since)}: ${[
+                            ch.newCompetitors.length ? `${ch.newCompetitors.length} new listing${ch.newCompetitors.length > 1 ? "s" : ""} you avoid` : "",
+                            ch.lostDemand.length ? `${ch.lostDemand.length} place${ch.lostDemand.length > 1 ? "s" : ""} you prefer marked closed` : "",
+                          ]
+                            .filter(Boolean)
+                            .join(", ")}. Open the pin for details.`}
+                        >
+                          {ch.alerts}
+                        </span>
+                      )}
                       <span className="pinrow__score" data-tip="Average fit score inside this pin, weighted by homes">
                         {Number.isNaN(p.meanScore) ? "–" : Math.round(p.meanScore)}
                       </span>

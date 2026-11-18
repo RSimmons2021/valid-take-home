@@ -15,7 +15,7 @@
       "homes": 671630,
       "places_kept": 98512,
       "units_per_rooftop": 1.58,
-      "bytes": 2428802
+      "bytes": 2460162
     },
     {
       "id": "austin",
@@ -30,7 +30,7 @@
       "homes": 427527,
       "places_kept": 82756,
       "units_per_rooftop": 1.04,
-      "bytes": 2817273
+      "bytes": 2842317
     },
     {
       "id": "chicago",
@@ -45,7 +45,7 @@
       "homes": 1026184,
       "places_kept": 180173,
       "units_per_rooftop": 1.06,
-      "bytes": 4551890
+      "bytes": 4596125
     },
     {
       "id": "denver",
@@ -60,7 +60,7 @@
       "homes": 646143,
       "places_kept": 88144,
       "units_per_rooftop": 1.66,
-      "bytes": 2506019
+      "bytes": 2527340
     }
   ]
 }
