@@ -3806,9 +3806,10 @@ dt[data-tip] {
   color: var(--ink-2);
 }
 
-/* a film: 9:16, plays in place */
+/* Portrait film poster and enlarged preview */
 .film {
   position: relative;
+  align-self: start;
   display: block;
   width: 100%;
   aspect-ratio: 9 / 16;
@@ -3844,6 +3845,49 @@ dt[data-tip] {
   .film:hover .film__play {
     transform: translate(-50%, -50%) scale(1.08);
   }
+}
+.film-preview {
+  width: min(416px, calc(100vw - 24px), max(248px, calc((100dvh - 144px) * 9 / 16 + 26px)));
+  max-height: calc(100dvh - 24px);
+}
+.film-preview::backdrop {
+  background: rgba(5, 6, 8, 0.62);
+  backdrop-filter: none;
+}
+.film-preview__body {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+.film-preview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.film-preview__header h3 {
+  min-width: 0;
+  font: 600 14px/1.3 var(--sans);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.film-preview__header .iconbtn {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
+}
+.film-preview canvas {
+  display: block;
+  width: min(100%, max(100px, calc((100dvh - 144px) * 9 / 16)));
+  height: auto;
+  justify-self: center;
+  border-radius: 10px;
+  background: var(--paper-2);
+}
+.film-preview__playback {
+  justify-self: center;
 }
 .film--missing {
   display: grid;

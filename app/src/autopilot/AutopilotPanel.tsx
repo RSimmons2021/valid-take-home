@@ -167,7 +167,6 @@ function KitView() {
   const metro = useStore((s) => s.metro)!;
   const plan = useStore((s) => s.plan)!;
   const open = useStore((s) => s.open);
-  const [playing, setPlaying] = useState<number | null>(null);
   const [busy, setBusy] = useState<Record<number, number>>({});
   const base = `catchment-${metro.info.id}-${slug(kit.business.name)}`;
   // The kit belongs to the plan it was built for; if the plan has moved on since, say so.
@@ -253,7 +252,7 @@ function KitView() {
           return (
             <li key={s.rank} className="kit__pin">
               {film ? (
-                <FilmPlayer spec={film} label={name} playing={playing === s.rank} onPlayingChange={(on) => setPlaying(on ? s.rank : null)} />
+                <FilmPlayer spec={film} label={name} />
               ) : (
                 <div className="film film--missing">No video</div>
               )}
