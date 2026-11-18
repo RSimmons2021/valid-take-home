@@ -189,6 +189,15 @@ See [ai.md](ai.md) for the server side.
 - **Link previews.** With the server, "Copy link" makes `/s?h=…&t=…&d=…&img=…`. The server answers with Open Graph tags and an instant redirect into the app; `img` is a 1200×630 snapshot uploaded to `/api/previews`. Without a server it copies the plain URL.
 - **Pin card.** It shows reach, then *Since <release>* (changes read through the weights: new listings of avoided signals and closures of preferred ones are alerts), local ad angles with video scene prompts, and **Copy brief / Brief .md**, a grounded creative brief (`model/brief.ts`).
 
+## Loading states (`ui/Progress.tsx`)
+
+One rule: **measure what can be measured; never fake what can't.**
+
+- **Loading a metro** streams the file and reports real bytes against the uncompressed size recorded in `index.json` (`Content-Length` would be the gzipped size). The store's `loadProgress` goes 0 → 1, then `"build"` while typed arrays and neighbour sums are made (one frame is yielded first, so that state paints). It shows as a 2 px bar under the top bar and a percentage beside the metro name. The bar appears only after 150 ms, so a cached switch never flashes. While it loads, the map, panels and legend step back to 55% opacity (the numbers are stale), and the app is `aria-busy`. A request ticket stops a slow earlier load from overwriting a newer one. The first load shows the same progress in a centred card ("1.2 of 2.4 MB", then "Building 11,758 blocks…").
+- **AI calls** can't report progress, so `StagedProgress` shows the stages the server really runs, the real elapsed seconds, and a skeleton shaped like the answer (weight rows for a brief, three cards for angles). Stages advance on an estimate, but the last never completes by timer: it stays active until the reply lands. Past 1.6× the estimate it says "taking longer than usual". Screen readers hear each stage once. While a brief is read, a light passes along the field and the ✦ twinkles. Cancel stays available.
+- **Copy link** answers on the button itself: "Copying…" while the map snapshot uploads, then "Copied" with a drawn check for 1.8 s. The three labels share one grid cell, so the width never changes. Only a failure raises a toast.
+- Under reduced motion, sweeps, shimmer and pulses stop; progress values and stage changes still show.
+
 ## Edge states
 
 - The tab title names the plan.

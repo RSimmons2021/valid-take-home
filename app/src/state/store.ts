@@ -15,6 +15,8 @@ interface Store extends PlanState {
   index: IndexFile | null;
   metro: Metro | null;
   loading: string | null;
+  /** while a metro loads: share of its file downloaded (0..1), then "build" while cells are made */
+  loadProgress: number | "build" | null;
   error: string | null;
   result: ScoreResult | null;
   plan: Plan | null;
@@ -94,6 +96,45 @@ async function fetchJson<T>(url: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+/**
+ * Fetch JSON while reporting real progress. The index records each file's uncompressed size,
+ * which is what the stream yields (Content-Length would be the gzipped size), so the bar
+ * measures bytes, not time. Without a readable body it falls back to a plain fetch.
+ */
+async function fetchJsonWithProgress<T>(url: string, totalBytes: number | undefined, onProgress: (share: number) => void): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url}: ${res.status} ${res.statusText}`);
+  if (!res.body || !totalBytes) return (await res.json()) as T;
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  let reported = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    const share = Math.min(1, received / totalBytes);
+    if (share - reported >= 0.02) {
+      reported = share;
+      onProgress(share);
+    }
+  }
+  const all = new Uint8Array(received);
+  let at = 0;
+  for (const c of chunks) {
+    all.set(c, at);
+    at += c.length;
+  }
+  return JSON.parse(new TextDecoder().decode(all)) as T;
+}
+
+/** Bumped by each metro load, so a slower earlier load can't overwrite a newer one. */
+let metroRequest = 0;
+
+/** Let the browser paint (a progress state) before a long synchronous step. */
+const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+
 const DEFAULTS: PlanState = {
   metroId: "sf-bay",
   profileId: DEFAULT_PROFILE.id,
@@ -143,6 +184,7 @@ export const useStore = create<Store>((set, get) => {
     index: null,
     metro: null,
     loading: null,
+    loadProgress: null,
     error: null,
     result: null,
     plan: null,
@@ -174,7 +216,7 @@ export const useStore = create<Store>((set, get) => {
         const wanted = index.metros.some((m) => m.id === get().metroId) ? get().metroId : index.metros[0].id;
         await get().setMetro(wanted);
       } catch (e) {
-        set({ error: e instanceof Error ? e.message : String(e), loading: null });
+        set({ error: e instanceof Error ? e.message : String(e), loading: null, loadProgress: null });
       }
       // First visit, even through a shared link: a reviewer opening a plan someone sent
       // still gets the welcome, then the guided tour.
@@ -183,17 +225,26 @@ export const useStore = create<Store>((set, get) => {
 
     async setMetro(id) {
       const summary = get().index?.metros.find((m) => m.id === id);
-      set({ loading: summary?.name ?? id, error: null, selected: null, hovered: null, focusedPin: null, hotPin: null, liftOverlay: null });
+      const ticket = ++metroRequest;
+      const current = () => ticket === metroRequest;
+      set({ loading: summary?.name ?? id, loadProgress: 0, error: null, selected: null, hovered: null, focusedPin: null, hotPin: null, liftOverlay: null });
       try {
         let metro = cache.get(id);
         if (!metro) {
-          const file = await fetchJson<MetroFile>(`./data/${id}.json`);
+          const file = await fetchJsonWithProgress<MetroFile>(`./data/${id}.json`, summary?.bytes, (p) => {
+            if (current()) set({ loadProgress: p });
+          });
+          // Building typed arrays and neighbour sums blocks for a moment; say so first.
+          if (!current()) return;
+          set({ loadProgress: "build" });
+          await nextFrame();
           metro = buildMetro(file);
           cache.set(id, metro);
         }
-        recompute({ metroId: id, metro, loading: null, frameRequest: get().frameRequest + 1 });
+        if (!current()) return;
+        recompute({ metroId: id, metro, loading: null, loadProgress: null, frameRequest: get().frameRequest + 1 });
       } catch (e) {
-        set({ error: e instanceof Error ? e.message : String(e), loading: null });
+        if (current()) set({ error: e instanceof Error ? e.message : String(e), loading: null, loadProgress: null });
       }
     },
 

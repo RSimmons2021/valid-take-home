@@ -3,6 +3,7 @@ import { WEIGHT_LABEL, type Weight, factorsFor } from "../model/factors";
 import { useStore } from "../state/store";
 import { BRIEF_MAX } from "./limits";
 import { usageLine } from "./client";
+import { Bone, StagedProgress } from "../ui/Progress";
 import { useAi } from "./store";
 
 const EXAMPLES = [
@@ -26,14 +27,14 @@ export function BriefBox() {
   const res = ai.proposal;
 
   return (
-    <div className="brief">
+    <div className={`brief${loading ? " brief--loading" : ""}`}>
       <label className="brief__label" htmlFor="brief-input">
         <span className="ai-mark" aria-hidden="true">
           ✦
         </span>
         Describe your business
       </label>
-      <div className="brief__field">
+      <div className={`brief__field${loading ? " brief__field--reading" : ""}`}>
         <textarea
           id="brief-input"
           rows={2}
@@ -82,11 +83,20 @@ export function BriefBox() {
       )}
 
       {loading && (
-        <div className="brief__loading" role="status">
-          <i className="shimmer" />
-          <i className="shimmer shimmer--short" />
-          <span>Reading your brief and choosing signals… usually under 10 s</span>
-        </div>
+        <StagedProgress
+          estimateMs={8000}
+          steps={["Reading your brief", `Matching it to the map's ${labels.size} factors`, "Choosing weights, with a reason for each", "Checking the reply against the schema"]}
+        >
+          {/* the shape of the suggestion that's coming */}
+          <Bone w="45%" h={12} />
+          <Bone w="90%" />
+          {[78, 64, 84].map((w) => (
+            <span key={w} className="bone-row">
+              <Bone w="26px" h={18} />
+              <Bone w={`${w}%`} />
+            </span>
+          ))}
+        </StagedProgress>
       )}
 
       {ai.briefStatus === "error" && (

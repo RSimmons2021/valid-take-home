@@ -10,6 +10,8 @@ import { CommandPalette, undoToast } from "./ui/CommandPalette";
 import { Dialogs } from "./ui/Dialogs";
 import { PinCard } from "./ui/PinCard";
 import { PrintPlan } from "./ui/PrintPlan";
+import { LoadBar, loadLabel } from "./ui/Progress";
+import { Glyph } from "./ui/TopBar";
 import { DocumentTitle, OfflineBanner } from "./ui/edges";
 import { PlanPanel } from "./ui/PlanPanel";
 import { TooltipLayer } from "./ui/Tooltip";
@@ -22,6 +24,9 @@ export function App() {
   const index = useStore((s) => s.index);
   const error = useStore((s) => s.error);
   const metro = useStore((s) => s.metro);
+  const loading = useStore((s) => s.loading);
+  const loadProgress = useStore((s) => s.loadProgress);
+  const loadingSummary = useStore((s) => s.index?.metros.find((m) => m.name === s.loading));
 
   useEffect(() => {
     void useStore.getState().boot();
@@ -70,13 +75,26 @@ export function App() {
   }, []);
 
   return (
-    <div className="app">
+    <div className="app" aria-busy={loading ? true : undefined}>
       <TopBar />
+      <LoadBar progress={loadProgress} />
       <main className="stage">
         {index && <MapView />}
         {!metro && !error && (
           <div className="boot" role="status">
-            <i className="spinner" aria-hidden="true" /> Loading Overture data…
+            <div className="boot__card">
+              <Glyph size={28} />
+              <p className="boot__title">{loading ? `Loading ${loading}` : "Loading Overture data"}</p>
+              <div className="boot__bar" aria-hidden="true">
+                <i
+                  className={loadProgress === null ? "boot__bar--wait" : undefined}
+                  style={{ transform: `scaleX(${loadProgress === "build" ? 1 : Math.max(0.04, loadProgress ?? 0)})` }}
+                />
+              </div>
+              <p className="boot__meta tabular">
+                {loadProgress === null ? "Finding the metros…" : loadLabel(loadProgress, loadingSummary?.bytes, loadingSummary?.cells)}
+              </p>
+            </div>
           </div>
         )}
         {error && (

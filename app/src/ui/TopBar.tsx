@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { KEYS } from "./shortcuts";
 import { useStore } from "../state/store";
 import { type ThemePref, useTheme } from "../state/theme";
@@ -12,6 +13,7 @@ export function TopBar() {
   const setMetro = useStore((s) => s.setMetro);
   const open = useStore((s) => s.open);
   const loading = useStore((s) => s.loading);
+  const loadProgress = useStore((s) => s.loadProgress);
   const plan = useStore((s) => s.plan);
   const release = useStore((s) => s.metro?.release);
   const startTour = useStore((s) => s.startTour);
@@ -44,7 +46,8 @@ export function TopBar() {
       )}
       {loading && (
         <span className="top__status" role="status">
-          <i className="spinner" aria-hidden="true" /> Loading {loading}…
+          <i className="spinner" aria-hidden="true" /> {loading}
+          <span className="top__pct tabular">{loadProgress === "build" ? "building" : `${Math.round((loadProgress ?? 0) * 100)}%`}</span>
         </span>
       )}
       <nav className="top__actions" aria-label="Plan actions">
@@ -66,18 +69,7 @@ export function TopBar() {
         <button type="button" className="btn btn--ghost" onClick={() => open("data")} data-tip="What was cleaned, what's covered, and how scores work">
           About the data
         </button>
-        <button
-          type="button"
-          className="btn btn--ghost"
-          data-tip="The link rebuilds this exact plan for whoever opens it, and shows a preview card in Slack or iMessage"
-          onClick={async () => {
-            const { url, rich } = await shareLink();
-            const ok = await copy(url);
-            toast(ok ? (rich ? "Link copied, with a preview card of this plan." : "Link copied. It rebuilds this exact plan.") : "Couldn't copy. Use the address bar.");
-          }}
-        >
-          Copy link
-        </button>
+        <CopyLinkButton />
         <button
           type="button"
           className="btn btn--primary"
@@ -126,5 +118,60 @@ function ThemeToggle() {
         )}
       </svg>
     </button>
+  );
+}
+
+type CopyState = "idle" | "busy" | "done";
+
+/**
+ * Copy link answers where you clicked: "Copying…" while the plan's map snapshot uploads
+ * for the preview card, then "Copied" with a check for a moment. All three labels share
+ * one grid cell, so the button never changes width. Only a failure needs a toast.
+ */
+function CopyLinkButton() {
+  const [state, setState] = useState<CopyState>("idle");
+  const reset = useRef(0);
+  useEffect(() => () => window.clearTimeout(reset.current), []);
+  const run = async () => {
+    if (state === "busy") return;
+    window.clearTimeout(reset.current);
+    setState("busy");
+    const { url } = await shareLink();
+    const ok = await copy(url);
+    if (!ok) {
+      setState("idle");
+      toast("Couldn't copy. Use the address bar.");
+      return;
+    }
+    setState("done");
+    reset.current = window.setTimeout(() => setState("idle"), 1800);
+  };
+  return (
+    <>
+    <button
+      type="button"
+      className={`btn btn--ghost copylink copylink--${state}`}
+      aria-label="Copy link"
+      aria-busy={state === "busy" || undefined}
+      data-tip="The link rebuilds this exact plan for whoever opens it, and shows a preview card in Slack or iMessage"
+      onClick={() => void run()}
+    >
+      <span className="copylink__label copylink__label--idle" aria-hidden="true">
+        Copy link
+      </span>
+      <span className="copylink__label copylink__label--busy" aria-hidden="true">
+        <i className="spinner" aria-hidden="true" /> Copying…
+      </span>
+      <span className="copylink__label copylink__label--done" aria-hidden="true">
+        <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+          <path d="M2.5 6.3 5 8.6l4.6-5" />
+        </svg>
+        Copied
+      </span>
+    </button>
+    <span className="sr-only" role="status">
+      {state === "done" ? "Link copied" : ""}
+    </span>
+    </>
   );
 }

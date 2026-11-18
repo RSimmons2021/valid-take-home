@@ -1,4 +1,5 @@
 import { usageLine } from "../ai/client";
+import { Bone, StagedProgress } from "./Progress";
 import { currentBusiness, pinKey, useAi } from "../ai/store";
 import { creativeBrief } from "../model/brief";
 import { type ChangedPlace, pinChanges, releaseLabel } from "../model/changes";
@@ -108,11 +109,18 @@ export function PinCard() {
           )}
 
           {loading && (
-            <div className="brief__loading" role="status">
-              <i className="shimmer" />
-              <i className="shimmer shimmer--short" />
-              <span>Finding local places and checking every claim… about 6 s</span>
-            </div>
+            <StagedProgress
+              estimateMs={6000}
+              steps={["Finding real places inside this pin", "Writing three hooks from them", "Checking every claim names a real place"]}
+            >
+              {[0, 1, 2].map((k) => (
+                <span key={k} className="bone-card">
+                  <Bone w="30%" h={8} />
+                  <Bone w="92%" />
+                  <Bone w="70%" />
+                </span>
+              ))}
+            </StagedProgress>
           )}
 
           {entry?.status === "error" && (

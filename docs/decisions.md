@@ -197,3 +197,9 @@ Radar's literal cursor lens was left out, because on a planning tool hiding part
 
 **Decision.** There is one set of easing and duration tokens. The palette opens instantly; warm tooltips skip their fade; exits are faster than entrances; reduced motion keeps fades and drops travel and loops.
 **Why.** Animation on something used a hundred times a day is latency. The old reduced-motion rule (every duration set to 0.01 ms) also removed the fades that explain state changes.
+
+### 35. Loading states: real progress where it exists, honest stages where it doesn't
+
+**Decision.** Metro loads report streamed bytes against the known file size. AI calls show their real server stages and elapsed time, with a final stage that only completes when the answer arrives.
+**Rejected.** A percentage bar for AI calls. A timer-driven percentage would invent precision the app doesn't have, and stall or jump at 90%. Stages plus seconds tell the truth and still show movement.
+**Detail.** Loading UI waits 150 ms before appearing, so fast (cached) work never flickers.
