@@ -3,6 +3,7 @@ import { type BriefAngle, type Ref, pinPlaces } from "./brief";
 import { pinName } from "./export";
 import type { Weights } from "./factors";
 import type { LiftDesign } from "./holdout";
+import { looksPersonal } from "./people";
 import type { Pin, Plan } from "./plan";
 
 /**
@@ -83,12 +84,6 @@ export interface PinScript {
 
 export const TITLE_WORDS = 8;
 
-/**
- * Overture lists individual practitioners as places ("Jane Doe, MD"). An ad shouldn't
- * point at a person, so the data fallback skips names that look like one.
- */
-const PERSONAL = /\b(MD|M\.D\.|DDS|DMD|DO|DVM|PhD|LCSW|LMFT|NP|PA-C|RN|Dr\.?)\b|^[A-Z][a-z]+ [A-Z]\.? ?[A-Z][a-z]+,/;
-export const looksPersonal = (name: string) => PERSONAL.test(name);
 const words = (s: string) => s.trim().split(/\s+/).filter(Boolean);
 const clipWords = (s: string, n: number) => words(s).slice(0, n).join(" ");
 

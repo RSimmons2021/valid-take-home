@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { MIN_DAILY, TITLE_WORDS, campaignKit, looksPersonal, motifFor, pinsForBudget, scriptFor, splitBudget } from "./campaign";
+import { MIN_DAILY, TITLE_WORDS, campaignKit, motifFor, pinsForBudget, scriptFor, splitBudget } from "./campaign";
+import { looksPersonal } from "./people";
 import type { Weights } from "./factors";
 import { planPins } from "./plan";
 import { scoreCells } from "./score";
@@ -68,8 +69,10 @@ describe("scripts", () => {
 
 describe("people aren't places to point at", () => {
   it("recognises practitioner listings", () => {
-    for (const n of ["Melissa Weinberg, MD: Endocrinologist", "Dr. Dawn L. Rosenberg, Md", "Paws Clinic DVM", "Sam Lee, LCSW"]) expect(looksPersonal(n)).toBe(true);
-    for (const n of ["Jefferson Square Park", "Joby's Dog Run Area", "Montessori House Of Children", "VIP Petcare Vaccination Clinic"]) expect(looksPersonal(n)).toBe(false);
+    const people = ["Melissa Weinberg, MD: Endocrinologist", "Dr. Dawn L. Rosenberg, Md", "Vivien Sun, Md", "Paws Clinic DVM", "Sam Lee, LCSW", "Ann O'Neil, np"];
+    const places = ["Jefferson Square Park", "Joby's Dog Run Area", "Montessori House Of Children", "VIP Petcare Vaccination Clinic", "Stanford Medicine Children's Health", "Do Re Mi Music Studio"];
+    for (const n of people) expect(looksPersonal(n), n).toBe(true);
+    for (const n of places) expect(looksPersonal(n), n).toBe(false);
   });
 });
 

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { MetroData } from "../data.ts";
+import { looksPersonal } from "../../src/model/people.ts";
 import { AiError, type Llm, type Usage } from "./llm.ts";
 
 /**
@@ -56,7 +57,8 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
 /**
  * Places the copy may mention: inside the radius, confidence ≥ 0.7, from signals the user
  * prefers (most relevant first, then nearest) topped up with neutral ones. Anything the
- * user weighted negatively is excluded: you don't name competitors in your own ads.
+ * user weighted negatively is excluded (you don't name competitors in your own ads), and so
+ * is any listing that looks like a person ("Jane Doe, MD"): an ad never names a person.
  */
 export function pinContext(metro: MetroData, input: Pick<AnglesInput, "lat" | "lon" | "radiusMi" | "weights">): ContextPlace[] {
   const p = metro.places;
@@ -64,7 +66,7 @@ export function pinContext(metro: MetroData, input: Pick<AnglesInput, "lat" | "l
   const signalIds = metro.signals.map((s) => s.id);
   const rows: { k: number; d: number; w: number }[] = [];
   for (let k = 0; k < p.id.length; k++) {
-    if (p.confidence[k] < MIN_CONFIDENCE) continue;
+    if (p.confidence[k] < MIN_CONFIDENCE || looksPersonal(p.name[k])) continue; // never offer a person to cite
     const w = input.weights[signalIds[p.signal[k]]] ?? 0;
     if (w < 0) continue;
     // cheap box test before the trig
