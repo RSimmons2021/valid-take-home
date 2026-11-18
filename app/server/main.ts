@@ -87,9 +87,15 @@ async function readJson(req: IncomingMessage, maxBytes = MAX_BODY): Promise<unkn
   }
 }
 
+/**
+ * The site's public origin, for absolute Open Graph URLs. Behind a proxy (Vercel forwarding
+ * /s and /api here) the Host header is this server's, so prefer the host the visitor used.
+ */
 function origin(req: IncomingMessage): string {
-  const proto = String(req.headers["x-forwarded-proto"] ?? "http").split(",")[0].trim();
-  return `${proto === "https" ? "https" : "http"}://${req.headers.host ?? `localhost:${PORT}`}`;
+  const first = (h: string | string[] | undefined) => String(Array.isArray(h) ? h[0] : (h ?? "")).split(",")[0].trim();
+  const proto = first(req.headers["x-forwarded-proto"]) || "http";
+  const host = first(req.headers["x-forwarded-host"]) || req.headers.host || `localhost:${PORT}`;
+  return `${proto === "https" ? "https" : "http"}://${host}`;
 }
 
 function sendHtml(req: IncomingMessage, res: ServerResponse, html: string, cache = "no-cache") {

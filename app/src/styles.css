@@ -3502,7 +3502,8 @@ dt[data-tip] {
 /* small things that come and go: a "Reset to…" link, a legend key, a results step */
 .appear,
 .legend__key,
-.results {
+.results,
+.brief {
   animation: fade-in var(--fast) var(--ease-out);
 }
 

@@ -90,15 +90,20 @@ async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promi
   return data as T;
 }
 
-/** server: our API answers (link previews work); ai: it also has a model key. */
-export async function health(): Promise<{ server: boolean; ai: boolean; model: string | null }> {
+/**
+ * server: our API answers (link previews work); ai: it also has a model key. `retry` means
+ * "no answer yet" (a timeout or a 5xx, e.g. a free-tier server waking up), as opposed to a
+ * definite "no API here" (a 404 on a static host), which isn't worth asking again.
+ */
+export async function health(timeoutMs = 5000): Promise<{ server: boolean; ai: boolean; model: string | null; retry: boolean }> {
   try {
-    const res = await fetch("./api/health", { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return { server: false, ai: false, model: null };
+    const res = await fetch("./api/health", { signal: AbortSignal.timeout(timeoutMs) });
+    if (!res.ok) return { server: false, ai: false, model: null, retry: res.status >= 500 };
     const data = await res.json();
-    return { server: !!data.ok, ai: !!data.ai, model: data.model ?? null };
-  } catch {
-    return { server: false, ai: false, model: null }; // static host: no API
+    return { server: !!data.ok, ai: !!data.ai, model: data.model ?? null, retry: false };
+  } catch (e) {
+    const timedOut = e instanceof DOMException && (e.name === "TimeoutError" || e.name === "AbortError");
+    return { server: false, ai: false, model: null, retry: timedOut };
   }
 }
 

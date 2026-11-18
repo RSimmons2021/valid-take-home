@@ -85,7 +85,14 @@ export const useAi = create<AiStore>((set, get) => ({
   angles: {},
 
   async checkHealth() {
-    const h = await health();
+    // A sleeping free-tier server can take ~30–60 s to wake. Keep asking, patiently, in the
+    // background; the AI controls appear when it answers. A static host answers "no" at once.
+    let h = await health();
+    for (let k = 0; h.retry && k < 4; k++) {
+      set({ available: false, server: false });
+      await new Promise((r) => setTimeout(r, 10_000));
+      h = await health(25_000);
+    }
     set({ available: h.ai, server: h.server, model: h.model });
   },
 
