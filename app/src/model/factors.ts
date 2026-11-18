@@ -1,4 +1,5 @@
 import type { Metro } from "../data/metro";
+import { HOUSEHOLD_INFO } from "./catalogue";
 
 /** A weight is a preference, not a coefficient: users pick one of five steps. */
 export type Weight = -2 | -1 | 0 | 1 | 2;
@@ -24,20 +25,17 @@ export interface Factor {
   format: (v: number) => string;
 }
 
+const info = (id: string) => HOUSEHOLD_INFO.find((f) => f.id === id)!;
+
 const HOUSEHOLD_FACTORS: Factor[] = [
   {
-    id: "homes",
-    label: "Homes",
-    description: "Addresses in the cell, with apartment units counted separately where the county lists them.",
+    ...info("homes"),
     group: "households",
     value: (m) => m.homes,
     format: (v) => `${Math.round(v).toLocaleString()} homes`,
   },
   {
-    id: "single",
-    label: "Detached houses",
-    description:
-      "Share of rooftops with a single address and no units: houses rather than apartment blocks. A proxy for owners, yards and garages.",
+    ...info("single"),
     group: "households",
     value: (m) => Float64Array.from(m.single, (v, i) => (m.rooftops[i] >= 5 ? v : Number.NaN)),
     format: (v) => (Number.isNaN(v) ? "too few rooftops" : `${Math.round(v * 100)}% of rooftops`),

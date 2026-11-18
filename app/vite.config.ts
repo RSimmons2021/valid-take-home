@@ -4,6 +4,8 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [react()],
   base: "./",
+  // In development the AI server runs separately (npm run dev:server); proxy its routes.
+  server: { proxy: { "/api": "http://localhost:8787" } },
   build: {
     target: "es2022",
     chunkSizeWarningLimit: 1500,
