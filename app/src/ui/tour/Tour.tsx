@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../../state/store";
 import { type Pt, type Rect, arrow, edgeToward, scribble } from "./sketch";
-import { STEPS, type Side } from "./steps";
+import { type Side, activeSteps } from "./steps";
 
 const GAP = 110; // distance between target and note, room for the arrow
 const MARGIN = 14; // keep notes inside the viewport
@@ -61,7 +61,9 @@ export function Tour() {
   const [noteSize, setNoteSize] = useState({ w: 300, h: 160 });
   const [viewport, setViewport] = useState({ w: window.innerWidth, h: window.innerHeight });
 
-  const def = step == null ? null : STEPS[step];
+  // Fixed for the tour's duration, so step numbers don't shift mid-tour.
+  const steps = useMemo(() => (step == null ? [] : activeSteps()), [step == null]);
+  const def = step == null ? null : (steps[step] ?? null);
   const narrow = viewport.w <= 900;
 
   const measure = useCallback(() => {
@@ -93,7 +95,7 @@ export function Tour() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") endTour();
       else if (e.key === "ArrowRight") {
-        if (step < STEPS.length - 1) setStep(step + 1);
+        if (step < steps.length - 1) setStep(step + 1);
         else endTour();
       }
       else if (e.key === "ArrowLeft" && step > 0) setStep(step - 1);
@@ -121,7 +123,7 @@ export function Tour() {
     const a = arrow(from, to, step * 7 + 3);
     marks = { loop: scribble(mark, step * 13 + 5, mark.h < 60 ? 10 : 6), shaft: a.shaft, head: a.head };
   }
-  const last = step === STEPS.length - 1;
+  const last = step === steps.length - 1;
   const hole = target ? { x: target.x - 10, y: target.y - 10, w: target.w + 20, h: target.h + 20 } : null;
 
   return (
@@ -154,7 +156,7 @@ export function Tour() {
         style={{ transform: `translate(${pos.x}px, ${pos.y}px) rotate(${step % 2 ? 1.2 : -1.2}deg)` }}
       >
         <p className="tour__count">
-          {step + 1} <span>of {STEPS.length}</span>
+          {step + 1} <span>of {steps.length}</span>
         </p>
         <h2 id="tour-title" className="tour__title">
           {def.title}
@@ -176,7 +178,7 @@ export function Tour() {
           </span>
         </div>
         <ol className="tour__dots" aria-hidden="true">
-          {STEPS.map((_, k) => (
+          {steps.map((_, k) => (
             <li key={k} data-on={k === step || undefined} />
           ))}
         </ol>

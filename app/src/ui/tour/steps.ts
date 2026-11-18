@@ -1,3 +1,4 @@
+import { useAi } from "../../ai/store";
 import { useStore } from "../../state/store";
 
 export type Side = "right" | "left" | "top" | "bottom";
@@ -14,6 +15,8 @@ export interface Step {
   body: string;
   /** put the app in the state this step talks about */
   before?: () => void;
+  /** only include the step when this holds (e.g. AI is configured) */
+  when?: () => boolean;
 }
 
 const closeCard = () => useStore.getState().select(null);
@@ -25,10 +28,18 @@ const closeCard = () => useStore.getState().select(null);
  */
 export const STEPS: Step[] = [
   {
+    target: ".brief",
+    side: "right",
+    title: "Say it in your own words",
+    body: "Describe the business and AI suggests which signals matter, with a reason for each. You review it before anything changes.",
+    before: closeCard,
+    when: () => useAi.getState().available === true,
+  },
+  {
     target: ".profiles",
     side: "right",
-    title: "Start here",
-    body: "Pick the kind of business you're advertising. Each one starts with sensible weights you can change.",
+    title: "Or pick a type",
+    body: "Each business type starts with sensible weights you can change.",
     before: closeCard,
   },
   {
@@ -61,7 +72,7 @@ export const STEPS: Step[] = [
     target: ".stats",
     side: "left",
     title: "Pins go where the fit is",
-    body: "Radius pins land where they reach the most well-matched homes. Change how many, and how wide, right above.",
+    body: "Radius pins land where they reach the most well-matched homes. Click a pin for local ad ideas grounded in the places inside it.",
     before: () => {
       closeCard();
       useStore.getState().requestFrame(); // pull back from the cell to show every pin
@@ -75,3 +86,8 @@ export const STEPS: Step[] = [
     before: closeCard,
   },
 ];
+
+/** The steps that apply right now (AI steps only when AI is available). */
+export function activeSteps(): Step[] {
+  return STEPS.filter((s) => !s.when || s.when());
+}

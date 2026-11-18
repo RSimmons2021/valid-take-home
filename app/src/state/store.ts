@@ -32,6 +32,8 @@ interface Store extends PlanState {
   setProfile(id: string): void;
   setWeight(factor: string, w: Weight): void;
   resetWeights(): void;
+  /** replace every weight at once (AI suggestions, undo); profileId "custom" marks them as not a preset */
+  setWeights(weights: Weights, profileId: string): void;
   setMinHomes(n: number): void;
   setPins(n: number): void;
   setRadius(mi: number): void;
@@ -66,6 +68,9 @@ function remember(key: string): void {
 }
 
 const cache = new Map<string, Metro>();
+
+/** Profile id for weights that didn't come from a preset (AI suggestion or hand-tuned from one). */
+export const CUSTOM_PROFILE = "custom";
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -121,10 +126,11 @@ export const useStore = create<Store>((set, get) => {
     async boot() {
       const fromUrl = decode(location.hash);
       const profile = profileById(fromUrl.profileId) ?? DEFAULT_PROFILE;
+      const custom = fromUrl.profileId === CUSTOM_PROFILE && fromUrl.weights;
       set({
         ...DEFAULTS,
         ...fromUrl,
-        profileId: profile.id,
+        profileId: custom ? CUSTOM_PROFILE : profile.id,
         weights: fromUrl.weights ?? { ...profile.weights },
       });
       try {
@@ -169,6 +175,11 @@ export const useStore = create<Store>((set, get) => {
     resetWeights() {
       const p = profileById(get().profileId) ?? DEFAULT_PROFILE;
       recompute({ weights: { ...p.weights } });
+    },
+    setWeights(weights, profileId) {
+      const clean: Weights = {};
+      for (const [k, w] of Object.entries(weights)) if (w !== 0) clean[k] = w;
+      recompute({ weights: clean, profileId, selected: null, focusedPin: null, frameRequest: get().frameRequest + 1 });
     },
     setMinHomes(minHomes) {
       recompute({ minHomes });

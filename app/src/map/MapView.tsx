@@ -295,7 +295,8 @@ export function MapView() {
         [pin.lon - dLon, pin.lat - dLat],
         [pin.lon + dLon, pin.lat + dLat],
       ],
-      { padding: framePadding(), duration: reducedMotion() ? 0 : 700, pitch: map.getPitch(), bearing: map.getBearing() },
+      // the pin card opens beside the left panel; keep the circle clear of both
+      { padding: framePadding(true), duration: reducedMotion() ? 0 : 700, pitch: map.getPitch(), bearing: map.getBearing() },
     );
   }, [focusedPin, plan]);
 
@@ -381,7 +382,8 @@ function easeInOutCubic(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 }
 
-function framePadding() {
+function framePadding(withCard = false) {
   const wide = window.innerWidth > 900;
-  return wide ? { top: 80, bottom: 70, left: 380, right: 400 } : { top: 60, bottom: 60, left: 30, right: 30 };
+  if (!wide) return { top: 60, bottom: 60, left: 30, right: 30 };
+  return { top: 80, bottom: 70, left: withCard ? 740 : 380, right: 400 };
 }

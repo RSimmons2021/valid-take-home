@@ -4,8 +4,10 @@ import { PALETTES, rampCss } from "./map/colors";
 import { useStore } from "./state/store";
 import { useTheme } from "./state/theme";
 import { BusinessPanel } from "./ui/BusinessPanel";
+import { useAi } from "./ai/store";
 import { CellCard } from "./ui/CellCard";
 import { Dialogs } from "./ui/Dialogs";
+import { PinCard } from "./ui/PinCard";
 import { PlanPanel } from "./ui/PlanPanel";
 import { TooltipLayer } from "./ui/Tooltip";
 import { TopBar } from "./ui/TopBar";
@@ -19,6 +21,7 @@ export function App() {
 
   useEffect(() => {
     void useStore.getState().boot();
+    void useAi.getState().checkHealth();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         const s = useStore.getState();
@@ -50,6 +53,7 @@ export function App() {
         )}
         {metro && <Legend />}
         <CellCard />
+        <PinCard />
       </main>
       {metro && <BusinessPanel />}
       {metro && <PlanPanel />}

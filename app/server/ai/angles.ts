@@ -29,6 +29,8 @@ export const AnglesRequest = z.object({
   weights: z.record(z.string().max(40), z.number().int().min(-2).max(2)),
   business: z.object({ name: z.string().trim().min(2).max(60), summary: z.string().trim().max(200).default("") }),
   area: z.object({ hood: z.string().max(60).nullable(), city: z.string().max(60).nullable() }),
+  /** bumped by "Regenerate": not shown to the model, only makes a fresh cache key */
+  attempt: z.number().int().min(0).max(50).default(0),
 });
 export type AnglesInput = z.infer<typeof AnglesRequest>;
 
@@ -113,6 +115,7 @@ What good looks like:
 - Each angle takes a different route: convenience, routine, neighbourhood pride, timing.
 Rules:
 - Name at least one listed place per angle, spelled exactly as given, and list its ref in "cites". Use only listed places.
+- Pick places this business's customers would recognise and that fit the service (a dog park for dog grooming, not a fish store).
 - State only what's given: no prices, ratings, opening hours, numeric distances, or claims about the places themselves.
 - Never assert or imply the reader's personal traits ("Are you a dog owner?", "As a parent…"). Talk about the place and the service.
 - No emojis, hashtags, ALL CAPS or repeated exclamation marks.

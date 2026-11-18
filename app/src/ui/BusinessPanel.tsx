@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { WEIGHTS, WEIGHT_LABEL, type Factor, type Weight, factorsFor } from "../model/factors";
 import { PROFILES, isPristine, profileById } from "../model/profiles";
-import { useStore } from "../state/store";
+import { BriefBox } from "../ai/BriefBox";
+import { useAi } from "../ai/store";
+import { CUSTOM_PROFILE, useStore } from "../state/store";
 import { Select } from "./Select";
 
 const MIN_HOMES = [0, 10, 25, 50, 100];
@@ -20,6 +22,10 @@ export function BusinessPanel() {
   const minHomes = useStore((s) => s.minHomes);
   const { setProfile, setWeight, resetWeights, setMinHomes } = useStore.getState();
   const [showAll, setShowAll] = useState(false);
+  const applied = useAi((s) => s.applied);
+  const undoApplied = useAi((s) => s.undoApplied);
+  const aiAvailable = useAi((s) => s.available);
+  const aiActive = applied != null && profileId === CUSTOM_PROFILE;
 
   const profile = profileById(profileId);
   const factors = useMemo(() => (metro ? factorsFor(metro) : []), [metro]);
@@ -34,7 +40,14 @@ export function BusinessPanel() {
           <b>01</b> Business
         </p>
         <h2 id="business-title">Who are you trying to reach?</h2>
+        <BriefBox />
+        {aiAvailable && <p className="profiles__lead">Or start from a type</p>}
         <div className="profiles" role="radiogroup" aria-label="Business type">
+          {aiActive && (
+            <button type="button" role="radio" aria-checked className="profile profile--ai" data-tip={applied.summary}>
+              <span aria-hidden="true">✦</span> {applied.name}
+            </button>
+          )}
           {PROFILES.map((p) => (
             <button
               key={p.id}
@@ -49,7 +62,16 @@ export function BusinessPanel() {
             </button>
           ))}
         </div>
-        {profile && <p className="panel__blurb">{profile.blurb}</p>}
+        {aiActive ? (
+          <p className="panel__blurb">
+            {applied.summary}{" "}
+            <button type="button" className="link" onClick={undoApplied} data-tip="Restore the weights you had before applying the suggestion">
+              Undo
+            </button>
+          </p>
+        ) : (
+          profile && <p className="panel__blurb">{profile.blurb}</p>
+        )}
 
         <div className="panel__head">
           <p className="eyebrow">
@@ -63,7 +85,15 @@ export function BusinessPanel() {
         </div>
         <ul className="factors">
           {active.map((f) => (
-            <FactorRow key={f.id} factor={f} weight={weights[f.id] ?? 0} competitor={profile?.competitor === f.id} onChange={setWeight} />
+            <FactorRow
+              key={f.id}
+              factor={f}
+              weight={weights[f.id] ?? 0}
+              competitor={aiActive ? applied.competitor === f.id : profile?.competitor === f.id}
+              // The model's reason stays visible only while the weight is still the one it suggested.
+              aiReason={aiActive && applied.reasons[f.id]?.weight === weights[f.id] ? applied.reasons[f.id].reason : undefined}
+              onChange={setWeight}
+            />
           ))}
         </ul>
         <button type="button" className="disclosure" aria-expanded={showAll} onClick={() => setShowAll((v) => !v)}>
@@ -104,11 +134,13 @@ function FactorRow({
   factor,
   weight,
   competitor,
+  aiReason,
   onChange,
 }: {
   factor: Factor;
   weight: Weight;
   competitor: boolean;
+  aiReason?: string;
   onChange: (id: string, w: Weight) => void;
 }) {
   const id = `f-${factor.id}`;
@@ -119,7 +151,13 @@ function FactorRow({
           {factor.label}
           {competitor && <span className="tag">competition</span>}
         </span>
-        <span className="factor__desc">{factor.description}</span>
+        {aiReason ? (
+          <span className="factor__ai" data-tip={factor.description}>
+            <span aria-hidden="true">✦</span> {aiReason}
+          </span>
+        ) : (
+          <span className="factor__desc">{factor.description}</span>
+        )}
       </div>
       <div className="weight" role="radiogroup" aria-labelledby={id}>
         {WEIGHTS.map((w) => (

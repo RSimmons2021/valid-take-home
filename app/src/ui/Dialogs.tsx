@@ -3,6 +3,7 @@ import { googleRadiusLines, pinsCsv, planGeoJson, plannedZips, zipsCsv } from ".
 import { profileById } from "../model/profiles";
 import { useStore } from "../state/store";
 import { Glyph } from "./TopBar";
+import { activeSteps } from "./tour/steps";
 import { compact, copy, download, int, pct, slug } from "./format";
 import { toast } from "./toast";
 
@@ -355,7 +356,7 @@ function WelcomeDialog({ onClose }: { onClose: () => void }) {
           ))}
         </div>
         <p className="welcome__after">
-          <span className="hand">Then a 6-step tour shows you around</span> · about a minute, skippable, and the <b>Guide</b> button
+          <span className="hand">Then a {activeSteps().length}-step tour shows you around</span> · about a minute, skippable, and the <b>Guide</b> button
           replays it.
         </p>
       </div>
